@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block title %}순환골재 활용 시각화{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/recycle.css') }}">
+{% endblock %}
+
+{% block content %}
+<br><br>
+<div class="container">
+  <h1>순환골재 활용 시각화</h1>
+
+  <!-- 회사 선택 드롭다운 -->
+  <div class="company-select" style="text-align:center; margin-bottom:20px;">
+    <label for="company-select">회사 선택:</label>
+    <select id="company-select" name="company_id">
+      <option value="">-- 회사 선택 --</option>
+      {% for comp in company_list %}
+        <option value="{{ comp.company_id }}">{{ comp.company_name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <!-- 통계 카드 영역 -->
+  <div class="stats">
+    <div class="card">
+      <h3>총 중량</h3>
+      <p id="totalWeight">0 kg</p>
+    </div>
+    <div class="card">
+      <h3>활동 단위</h3>
+      <p id="totalCount">0 개</p>
+    </div>
+    <div class="card">
+      <h3>진행률</h3>
+      <div class="progress">
+        <div id="progressBar" class="progress-bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 추천 문구 표시 -->
+  <div id="suggestions"></div>
+
+  <!-- 메인 애니메이션 캔버스 -->
+  <canvas id="animationCanvas"></canvas>
+
+  <!-- 나무 애니메이션 캔버스 -->
+  <div class="tree-wrapper">
+    <canvas id="treeCanvas"></canvas>
+  </div>
+
+  <!-- 최종 결과 표시 -->
+  <div id="resultInfo"></div>
+</div>
+
+<!-- 메인 스크립트 -->
+<script src="{{ url_for('static', filename='js/recycle.js') }}"></script>
+<script>
+  // 회사 선택 시 랜덤 중량을 data.weight에 할당하고,
+  // 총 중량 카드만 업데이트하도록 처리
+  document.getElementById('company-select').addEventListener('change', function() {
+    if (!this.value) return;  // 회사 미선택 시 무시
+
+    // 1) 1,000 ~ 10,000kg 사이 임의 랜덤 값
+    const rand = Math.floor(Math.random() * 9000) + 1000;
+
+    // 2) 전역 data.weight 갱신
+    window.data.weight = rand;
+
+    // 3) UI 업데이트
+    document.getElementById('totalWeight').innerText = rand.toLocaleString() + ' kg';
+    document.getElementById('totalCount').innerText = '0 개';
+    document.getElementById('progressBar').style.width = '0%';
+    document.getElementById('resultInfo').innerHTML = '';
+
+    // 4) 애니메이션 캔버스 초기화
+    const animCanvas = document.getElementById('animationCanvas');
+    const treeCanvas = document.getElementById('treeCanvas');
+    const ctx = animCanvas.getContext('2d');
+    const tctx = treeCanvas.getContext('2d');
+    ctx.clearRect(0, 0, animCanvas.width, animCanvas.height);
+    tctx.clearRect(0, 0, treeCanvas.width, treeCanvas.height);
+
+    // 5) 추천 활동(시작 버튼) 다시 렌더링
+    loadSuggestions();
+  });
+</script>
+{% endblock %}

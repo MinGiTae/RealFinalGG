@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}갤러리{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/gallery.css') }}">
+{% endblock %}
+
+{% block content %}
+<br><br>
+<h1>탐지 결과 갤러리</h1>
+
+<div class="gallery-wrapper">
+  <!-- 필터 -->
+  <div class="gallery-controls">
+    <form method="get" action="{{ url_for('gallery_bp.show_gallery') }}">
+      <label for="site_id">현장:</label>
+      <select name="site_id" id="site_id" required>
+        <option value="">-- 선택 --</option>
+        {% for s in sites %}
+          <option value="{{ s.site_id }}" {% if s.site_id|string == selected_site %}selected{% endif %}>
+            {{ s.site_name }}
+          </option>
+        {% endfor %}
+      </select>
+
+      <label for="date">날짜 (선택):</label>
+      <input type="date" name="date" id="date" value="{{ selected_date }}">
+
+      <button type="submit">조회</button>
+    </form>
+  </div>
+</div>
+
+<!-- ✅ 여기에 이미지 출력 컨테이너로 통합 -->
+<div class="image-display-info">
+  {% if photos %}
+    {% for photo in photos %}
+      <div class="image-card">
+        <a href="{{ url_for('upload_bp.waste_disposal',
+                            site_id=photo.site_id,
+                            site_name=selected_name,
+                            site_date=photo.uploaded_at.strftime('%Y-%m-%d'),
+                            result_img=(selected_folder ~ '/' ~ photo.image_filename)
+                          ) }}">
+          <img
+            src="{{ url_for('upload_bp.result_file', subpath=(selected_folder ~ '/' ~ photo.image_filename)) }}"
+            alt="탐지 이미지"
+          />
+        </a>
+        <div class="image-info">
+          <p><strong>업로드일:</strong> {{ photo.uploaded_at.strftime('%Y-%m-%d') }}</p>
+          <p><strong>탐지 요약:</strong> {{ photo.detection_summary }}</p>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p style="text-align: center; color: #ccc;">📌 선택한 현장의 탐지 이미지가 여기에 표시됩니다.</p>
+  {% endif %}
+</div>
+
+{% endblock %}
+

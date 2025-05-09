@@ -1,0 +1,257 @@
+#character {
+  position: fixed;
+  top: 0;
+  left: 0;
+  font-size: 40px;
+  pointer-events: none;
+  transition: transform 0.1s linear;
+  z-index: 9999;
+}
+
+.container1 {
+  gap:30px;
+  display: flex; /* ✅ 추가: 중앙 정렬 */
+  align-items: center;      /* ✅ 추가: 수직 중앙 정렬 */
+  margin:40px;
+  justify-content: center;
+  align-items: flex-start;
+  padding-right: 100px;              /* ✅ 추가: 그래프 간 간격 */
+}
+
+.container2{
+  display: flex;/* ✅ 추가: 중앙 정렬 */
+  align-items: center;      /* ✅ 추가: 수직 중앙 정렬 */
+  margin:40px;
+  gap:30px;
+  justify-content: center;
+  align-items: flex-start;
+  padding-right: 100px;            /* ✅ 추가: 그래프 간 간격 */
+}
+
+.container3{
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  margin:40px;
+  gap:40px;
+  padding-right: 100px;
+}
+
+.container4{
+  display: flex;/* ✅ 추가: 중앙 정렬 */
+  align-items: stretch;
+  justify-content: center; /* ✅ 추가: 수직 중앙 정렬 */
+  margin:30px;
+  gap:130px;/* ✅ 추가: 그래프 간 간격 */
+  padding: 40px 0;
+
+}
+.container1,
+.container2,
+.container3 {
+  padding: 0 100px;  /* ✅ 좌우 동일한 여백 */
+}
+
+
+.container4-1{}
+
+.chart-container{
+  width: 300px;
+  height: 300px;
+  padding:30px;
+  background-color:#191917;
+  border-radius: 8px;
+
+}
+
+.chart-container2 {
+  width: 1090px;
+  height: 300px;
+  padding:30px;
+  background-color:#191917;
+  border-radius: 8px;
+}
+
+.chart-container3{
+  width:1000px;
+  height: 300px;
+  padding:30px;
+  background-color:#191917;
+  border-radius: 8px;
+
+}
+
+.chart-container4{
+  width: 400px;
+  height: 300px;
+  padding:30px;
+  background-color:#191917;
+  border-radius: 8px;
+}
+
+
+.chart-container5{
+  width: 1050px;
+  height: 400px;
+  padding:20px;
+  background-color:#191917;
+  border-radius: 8px;
+}
+
+.chart-container6{
+  width: 400px;
+  height:400px;
+  padding:20px;
+  background-color:#191917;
+  border-radius: 8px;
+}
+
+.chart-container7{
+  width: 650px;
+  height: 400px;
+  padding:20px;
+  margin: 10px;
+  background-color:#191917;
+  border-radius: 8px;
+}
+.chart-container8{
+  width: 650px;
+  height: 400px;
+  padding:20px;
+  margin: 15px;
+  background-color:#191917;
+  border-radius: 8px;
+}
+
+#korea-map svg{
+
+  width: 530px;
+  height: 630px;
+}
+
+#korea-map path {
+  fill: #111; /* 평상시 색 (어두운 배경용) */
+  stroke: #444; /* 외곽선 */
+  stroke-width: 0.5;
+  transition: fill 0.3s ease; /* 부드럽게 색상 전환 */
+}
+
+#korea-map path:hover {
+  fill: #ffcc00; /* 호버할 때 밝은 노란색으로 변경 */
+  cursor: pointer; /* 마우스 포인터 모양 변경 */
+}
+
+canvas#siteCarbonChart {
+  width: 100%;
+  height: 100%;
+}
+
+canvas#carbonChart {
+  width: 100%;
+  height: 100%;
+}
+
+canvas#wasteChart {
+  width: 100%;
+  height: 100%;
+}
+
+
+canvas#monthlyCompareChart {
+  width: 100%;
+  height: 100%;
+}
+
+canvas#marchWasteChart {
+  width: 100%;
+  height: 100%;
+}
+
+canvas#companyCarbonChart {
+  width: 80%;
+  height: 80%;
+}
+
+canvas#topCompanyChart{
+  width: 60%;
+  height: 60%;
+}
+
+
+#construction-list{
+  position: absolute;
+  top: 120px;
+  left: 50px;
+  background: rgba(0,0,0,0.8);
+  color: white;
+  padding: 15px;
+  border-radius: 10px;
+  display: none;
+  z-index: 9999;
+}
+
+#construction-list.popup {
+  position: absolute;
+  display: none;
+  background-color: #1f1f1f;
+  color: white;
+  padding: 15px;
+  border-radius: 10px;
+  border: 1px solid #444;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+  min-width: 180px;
+  z-index: 9999;
+}
+
+#construction-list.popup.active {
+  display: block;
+}
+
+
+#construction-list.popup h3 {
+  margin-top: 0;
+  font-size: 16px;
+  border-bottom: 1px solid #444;
+  padding-bottom: 5px;
+  margin-bottom: 10px;
+}
+
+#construction-list.popup ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+#construction-list.popup ul li {
+  font-size: 14px;
+  padding: 2px 0;
+}
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.popup-close {
+  cursor: pointer;
+  font-size: 16px;
+  color: #f87171;
+  padding: 0 8px;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.popup-close:hover {
+  background: #333;
+}
+
+.dashboard-frame {
+  border: 2px dashed #666;
+  padding: 40px;
+  margin: 40px auto;
+  max-width: 1600px;
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.02); /* 살짝 반투명 배경 */
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
+}

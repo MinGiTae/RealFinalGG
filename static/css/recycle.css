@@ -1,0 +1,157 @@
+/* 전체 레이아웃 컨테이너 */
+.container {
+  max-width: 900px;
+  margin: 50px auto;
+  background: #2e2e2e;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+}
+
+/* 제목 스타일 */
+.container h1 {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #fff;
+}
+
+/* 회사 선택 드롭다운 */
+.company-select {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.company-select label {
+  color: #fff;
+  font-size: 16px;
+  margin-right: 8px;
+}
+.company-select select {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  background: #424242;
+  color: #fff;
+  font-size: 14px;
+  appearance: none;
+  box-shadow: inset 0 0 3px rgba(0,0,0,0.5);
+  outline: none;
+}
+
+/* 통계 카드 묶음 */
+.stats {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 30px;
+}
+
+/* 개별 카드 */
+.card {
+  flex: 1;
+  margin: 0 10px;
+  padding: 15px;
+  background: #424242;
+  border-radius: 6px;
+  text-align: center;
+}
+.card h3 {
+  margin-bottom: 10px;
+  color: #ddd;
+}
+.card p {
+  font-size: 1.2rem;
+  color: #fff;
+}
+
+/* 진행률 바 */
+.progress {
+  width: 100%;
+  height: 20px;
+  background: #555;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.progress-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #76c7c0, #4aa3a0);
+  transition: width .5s ease;
+}
+
+/* 추천 카드 영역 */
+#suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  margin-bottom: 30px;
+}
+.suggestion {
+  width: 30%;
+  min-width: 180px;
+  padding: 12px;
+  margin-bottom: 20px;
+  background: #333;
+  border: 1px solid #555;
+  border-radius: 6px;
+  text-align: center;
+  color: #fff;
+}
+.suggestion .icon {
+  font-size: 48px;
+  margin-bottom: 8px;
+}
+.suggestion h4 {
+  margin-bottom: 6px;
+}
+.suggestion p {
+  margin-bottom: 10px;
+}
+.suggestion button {
+  padding: 6px 12px;
+  border: none;
+  background: #4aa3a0;
+  color: #212121;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* 캔버스 공통 스타일 */
+canvas {
+  display: block;
+  margin: 20px auto;
+  background: #2e2e2e;
+  border: 1px solid #555;
+  width: 100%;
+}
+
+/* 나무 애니메이션 영역 */
+.tree-wrapper {
+  margin-bottom: 20px;
+  overflow: visible;
+}
+
+/* 결과 박스 */
+#resultInfo {
+  background: #333;
+  padding: 15px;
+  border-left: 6px solid #76c7c0;
+  border-radius: 6px;
+  margin-top: 10px;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #fff;
+  animation: fadeIn 0.5s ease-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .stats { flex-direction: column; }
+  .card { margin: 10px 0; }
+  .suggestion { width: 45%; }
+}
+@media (max-width: 480px) {
+  .suggestion { width: 100%; }
+}

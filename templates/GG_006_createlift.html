@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block title %}Test 페이지{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/GG_006_createlift.css') }}" />
+{% endblock %}
+
+{% block content %}
+<br><br><br><br>
+
+{# ISO와 폐기물 체크리스트 문항 정의 #}
+{% set iso_questions = [
+  '조직은 자사의 환경 측면(영향 요인)을 식별하였는가?',
+  '중대한 환경 측면을 평가하고 우선순위를 매겼는가?',
+  '환경성과를 측정하고 있으며 관련 데이터를 기록하는가?',
+  '법적 요구사항 준수를 주기적으로 점검하고 있는가?',
+  '환경 관련 기록을 적절히 보존하고 있는가?',
+  '최고경영진은 환경경영체계에 대한 정기적인 검토를 수행하는가?',
+  '검토 결과에 따른 개선 조치가 문서화되어 실행되었는가?'
+] %}
+
+{% set waste_questions = [
+  '현장별 폐기물 처리 계획서를 수립했는가?',
+  '폐기물 처리 계획이 관할 지자체에 신고되었는가?',
+  '폐기물을 종류별(콘크리트, 목재, 금속 등)로 분리배출하고 있는가?',
+  '현장 내 분리배출 장소 및 표지판이 설치되어 있는가?',
+  '등록된 건설폐기물 수집·운반·처리업체와 계약을 체결했는가?',
+  '폐기물 처리 내역이 적정하게 관리되고 있는가?',
+  '폐기물 발생량, 처리량, 계약서 등의 기록을 보관하고 있는가?'
+] %}
+
+<div id="container">
+  <!-- 회사/현장 선택 -->
+  <div class="search-container">
+    <div id="site-list-container">
+      <h1 id="site-list-title">회사/현장 선택</h1>
+      <form id="select-form" method="POST" action="/select-site">
+        <input type="hidden" name="company_name" id="company-name-input" />
+        <input type="hidden" name="site_name"    id="site-name-input"    />
+
+        <div class="selection-wrapper">
+          <div class="select-group">
+            <select id="company-select">
+              <option value="" disabled selected>회사를 선택하세요</option>
+              {% for comp in companies %}
+                <option value="{{ comp.company_name }}">{{ comp.company_name }}</option>
+              {% endfor %}
+            </select>
+            <select id="site-select" disabled>
+              <option value="" disabled selected>현장을 선택하세요</option>
+            </select>
+          </div>
+          <div class="action-group">
+<!--            <button type="button" id="select-button" onclick="submitSelection()">선택하기</button>-->
+            <div id="selected-info">선택된 회사: – / 현장: –</div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 체크리스트 영역 -->
+  <div class="table-container0">
+    <div class="table-container">
+      <div class="table-column">
+        <div class="header">ISO 적합여부</div>
+        {% for q in iso_questions %}
+          <div class="row">
+            {{ loop.index }}. {{ q }}
+            <span class="status-circle arrow-target" data-index="{{ loop.index }}"></span>
+          </div>
+        {% endfor %}
+      </div>
+      <div class="table-column">
+        <div class="header">건설폐기물 법 적합여부</div>
+        {% for q in waste_questions %}
+          <div class="row">
+            {{ loop.index }}. {{ q }}
+            <span class="status-circle arrow-target" data-index="{{ loop.index + iso_questions|length }}"></span>
+          </div>
+        {% endfor %}
+        <div class="complete-button-container">
+          <button id="Button3">완료</button>
+        </div>
+      </div>
+    </div>
+
+    <img id="arrow" src="{{ url_for('static', filename='img/yellow-arrow.png') }}" alt="arrow" />
+
+    <!-- 결과 테이블 -->
+    <div class="table-container2">
+      <table id="result-table">
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>항목</th>
+            <th>판단</th>
+            <th>부적합 사유</th>
+            <th>시간</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- 다운로드 버튼 -->
+    <div id="Button">
+      <button id="Button1">EXCEL 출력하기</button>
+      <button id="Button2">PDF 출력하기</button>
+    </div>
+  </div>
+</div>
+
+<!--&lt;!&ndash; 팝업 &ndash;&gt;-->
+<!--<div id="fixed">-->
+<!--  <img src="{{ url_for('static', filename='img/what.png') }}" id="popup-btn" alt="info icon" />-->
+<!--</div>-->
+<!--<div id="popup"><br>설명서</div>-->
+
+<!-- 외부 라이브러리 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="{{ url_for('static', filename='js/GG_006_createlift.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}Test 페이지{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/GG_001_main.css') }}">
+
+{% endblock %}
+
+{% block content %}
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<img id="crain" src="/static/img/crain.png" alt="crain"/>
+
+
+
+
+
+
+<h1 class="scroll-text" id="scrollText1" style="font-size: 8vw; color: #FEBC01; line-height: 0.9;">Garbage<br>Guard</h1>
+<img id="logo2" src="/static/img/logo.png" alt="logo"/>
+<h1 class="scroll-text2" id="scrollText2" style="font-size: 3.5vw; color: white;">실시간 AI로 관리하는 <br>건설 폐기물 분리 시스템</h1>
+<h1 class="scroll-text3" id="scrollText3" style="font-size: 2vw; color: white;">현장의 폐기물 관리, 탄소중립을 실천하세요.</h1>
+
+
+
+
+<h3 class="scroll-text4" id="scrollText4" style="font-size: 2.5vw; color: #FEBC01;"><a style="font-size: 4vw;">탄</a>소중립 </h3>
+<h3 class="scroll-text5" id="scrollText5" style="font-size: 1.5vw; color: white;">이제 기술로 대응할 때입니다.</h3>
+<img class="scroll-text6" id="scrollText6" src="/static/img/why.png" alt="why"/>
+<h3 class="scroll-text7" id="scrollText7">건설 폐기물은 전체의 38%를 차지하며, 탄소 배출의 주요 원인입니다. <br>
+                                                                                  GarbageGuard는 AI로 실시간 탐지하고<br>
+                                                                                  ISO 14001 양식의 자동 보고서를 생성해 탄소중립 실현을 지원합니다.
+</h3>
+
+
+<img id="scrollImage" src="/static/img/3P2.png" alt="3P2 Image" >
+
+
+<img id="scrollImage2" src="/static/img/3P3.png" alt="3P3 Image" >
+
+<img id="AnimationImage" class="hidden" src="/static/img/3P2_1.png" alt="New Image" >
+<img id="AnimationImage2" class="hidden" src="/static/img/3P2_2.png" alt="New Image" >
+<img id="AnimationImage3" class="hidden" src="/static/img/3P2_3.png" alt="New Image" >
+<img id="AnimationImage4" class="hidden" src="/static/img/3P2_4.png" alt="New Image" >
+<img id="AnimationImage5" class="hidden" src="/static/img/3P2_5.png" alt="New Image" >
+<img id="AnimationImage6" class="hidden2" src="/static/img/3P2_6.png" alt="New Image" >
+<img id="AnimationImage7" class="hidden2" src="/static/img/3P2_7.png" alt="New Image" >
+<img id="AnimationImage8" class="hidden2" src="/static/img/3P2_8.png" alt="New Image" >
+<img id="AnimationImage9" class="hidden2" src="/static/img/3P2_9.png" alt="New Image" >
+
+<div id="buttons">
+  <button id="Button1" onclick="location.href='/upload/waste_disposal'">사진 업로드 시작</button>
+  <button id="Button2" onclick="location.href='{{ url_for('csr.show_csr') }}'">현장 등록하기</button>
+</div>
+
+
+
+<div id="buttons2">
+  <button id="Button3" onclick="location.href='/upload/waste_disposal'">사진 업로드 시작</button>
+  <button id="Button4" onclick="location.href='{{ url_for('csr.show_csr') }}'">현장 등록하기</button>
+</div>
+<!-- JS 연결 -->
+<script type="text/javascript" src="{{ url_for('static', filename='js/GG_001_main.js') }}"></script>
+
+{% endblock %}

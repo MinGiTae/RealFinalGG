@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+
+{% block title %}Test 페이지{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/GG_002_waste_disposal.css') }}" />
+{% endblock %}
+
+{% block content %}
+
+<!-- 📌 전역 변수 주입 (JS에서 window로 접근) -->
+<script>
+  window.CURRENT_SITE_ID   = "{{ site_id if site_id is not none else '' }}";
+  {% if result_img %}
+    window.resultImgPath     = "{{ result_img }}";
+    window.detectedCounts    = {{ detected_objects_dict | tojson }};
+    window.detectedDetailed  = {{ detected_detailed | tojson }};
+  {% else %}
+    window.resultImgPath     = "";
+    window.detectedCounts    = {};
+    window.detectedDetailed  = [];
+  {% endif %}
+</script>
+
+<br><br>
+
+<div class="main-wrapper">
+  <!-- 탐지 전용 폼 시작 -->
+  <form method="POST"
+        action="{{ url_for('upload_bp.waste_disposal') }}"
+        enctype="multipart/form-data">
+
+    <!-- 상단 선택 -->
+    <div class="top-bar">
+      <div class="search-date-group">
+        <div class="input-box1">
+          <label for="company-select">회사 선택</label>
+          <div class="input-with-icon">
+            <select id="company-select" name="company_id">
+              <option value="">회사 선택</option>
+              {% for company in company_list %}
+                <option value="{{ company.company_id }}"
+                  {% if company.company_name == prefilled_company_name %}selected{% endif %}>
+                  {{ company.company_name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="input-box1">
+          <label for="site-select">현장 선택</label>
+          <div class="input-with-icon">
+            <select id="site-select" name="site_id">
+              <option value="">현장 선택</option>
+              {% for site in site_list %}
+                <option value="{{ site.site_id }}"
+                        data-company="{{ site.company_id }}"
+                        {% if site.site_name == prefilled_site_name %}selected{% endif %}>
+                  {{ site.site_name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="input-box2">
+          <label for="site-date">날짜</label>
+          <div class="input-with-icon">
+            <input type="date"
+                   id="site-date"
+                   name="site_date"
+                   value="{{ prefilled_date or '' }}" />
+          </div>
+        </div>
+      </div>
+        <div class="button-box">
+          <button type="button" class="save-button">저장</button>
+        </div>
+    </div>
+
+    <!-- 숨겨진 입력 -->
+    <input type="hidden" name="site_name" id="hidden-site-name">
+    <input type="hidden" name="site_date" id="hidden-site-date">
+
+    <!-- 본문 -->
+    <div class="content-row">
+      <!-- 좌측 업로드 -->
+      <div class="left-panel">
+        <label for="fileInput" class="upload-wrapper" id="uploadArea">
+          <div class="upload-placeholder"
+               id="placeholder"
+               style="display: {{ 'none' if result_img else 'flex' }};">
+            <img src="https://img.icons8.com/ios-filled/100/upload-to-cloud.png" alt="Upload Icon">
+            <p>JPG, PNG 이미지를 업로드해주세요</p>
+          </div>
+          <img id="preview" src="" alt="Preview" style="display:none;" />
+          <div id="zoom-container"
+               style="display: {{ 'block' if result_img else 'none' }};
+                      width:100%; height:100%; overflow:hidden; position:relative;">
+            <img id="detectionResult"
+                 src="{{ url_for('upload_bp.result_file', subpath=result_img) if result_img else '' }}"
+                 alt="Detection Result"
+                 style="width:100%; height:100%; object-fit:contain;" />
+          </div>
+        </label>
+        <input type="file"
+               name="photo"
+               id="fileInput"
+               accept="image/png,image/jpeg"
+               style="display:none;" />
+      </div>
+
+      <!-- 우측 통계 -->
+      <div class="right-panel">
+        <div class="site-info-box">
+          <h2 id="site-name-display">
+            {% if prefilled_company_name and prefilled_site_name %}
+              {{ prefilled_company_name }} - {{ prefilled_site_name }}
+            {% else %}
+              현장명 없음
+            {% endif %}
+          </h2>
+        </div>
+
+        <div class="dashboard-container">
+          <div class="dashboard-grid">
+            <div class="data-box">
+              <div class="icon">📊</div>
+              <div>
+                <p class="label">전체 객체 수</p>
+                <p class="value" id="totalObjects">0</p>
+              </div>
+            </div>
+            <div class="data-box">
+              <div class="icon">⚠️</div>
+              <div>
+                <p class="label">위험 폐기물</p>
+                <p class="value" id="hazardousCount">0</p>
+              </div>
+            </div>
+            <div class="data-box">
+              <div class="icon">♻️</div>
+              <div>
+                <p class="label">재활용 가능</p>
+                <p class="value" id="recyclableCount">0</p>
+              </div>
+            </div>
+            <div class="data-box">
+              <div class="icon">🌡️</div>
+              <div>
+                <p class="label">탄소 배출량 추정</p>
+                <p class="value" id="carbonEmission">0 kg</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="waste-container">
+          <div class="chart-title">폐기물 종류 비율</div>
+          <canvas id="wasteChart"></canvas>
+        </div>
+
+        <div class="object">
+          <h3 class="section-title">탐지된 객체</h3>
+          <div class="object-scroll">
+            <ul class="object-list"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 하단 -->
+    <div class="bottom-stats">
+      <div class="top-carbon-table">
+        <h3>Top Carbon Emission</h3>
+        <table id="carbonTable">
+          <thead>
+            <tr><th>#</th><th>Name</th><th>Count</th><th>Carbon(kg)</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="carbon-chart-section">
+        <h3>월별 폐기물 배출량 비교</h3>
+        <canvas id="carbonChart"></canvas>
+      </div>
+    </div>
+  </form>
+  <!-- 탐지 폼 종료 -->
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@9.4.0/dist/panzoom.min.js"></script>
+<script src="{{ url_for('static', filename='js/GG_002_waste_disposal.js') }}"></script>
+
+{% endblock %}

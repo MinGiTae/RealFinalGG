@@ -1,0 +1,467 @@
+html, body{
+    margin : 0;
+    padding : 0;
+    height: 50vh;
+    background-color : #212121;
+    min-width: 768px;
+    min-height: 768px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    font-family: 'paybooc-Bold';
+    background-image: url('/static/img/background.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+
+}
+
+
+@font-face {
+    font-family: 'Paperlogy-8ExtraBold';
+    src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-8ExtraBold.woff2') format('woff2');
+    font-weight: 800;
+    font-style: normal;
+}
+
+
+@font-face {
+    font-family: 'Cafe24Ohsquare';
+    src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/Cafe24Ohsquare.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+
+
+
+
+#character {
+  position: fixed;
+  top: 0;
+  left: 0;
+  font-size: 40px;
+  pointer-events: none;
+  transition: transform 0.1s linear;
+  z-index: 9999;
+}
+
+
+
+
+
+
+
+
+#crain {
+  height : 40vw;
+  width : 30vw;
+  position: fixed;
+  left: 54vw;
+  top : 3.5vw;
+  z-index: 200;
+  animation: fadeInUp 1s ease forwards;
+  animation-delay: 0.5s;
+}
+
+
+
+
+
+#logo2 {
+    position: fixed;
+    height : 4vw;
+    left : 45vw;
+    top : 40%;
+    transform: translate(-50%, -50%);
+	white-space: nowrap;
+	transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+}
+
+
+
+
+.scroll-text {
+    font-family: 'Paperlogy-8ExtraBold';
+	position: fixed;
+	height : 380px;
+    z-index: 10;
+	top: 25%;
+	left: 35%;
+	transform: translate(-50%, -50%);
+	white-space: nowrap;
+	transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+
+}
+
+.scroll-text2 {
+	font-family: 'Cafe24Ohsquare';
+	position: fixed;
+    z-index: 10;
+	top: 55%;
+	left: 38%;
+	transform: translate(-50%, -50%);
+	white-space: nowrap;
+	transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+}
+.scroll-text3 {
+	position: fixed;
+    z-index: 10;
+	top: 72%;
+	left: 38%;
+	transform: translate(-50%, -50%);
+	white-space: nowrap;
+	transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+}
+
+.scroll-text4 {
+  position: fixed;
+  z-index: 10;
+  top: 18%;
+  left: 14%;
+  transform: translateX(-100%);
+  white-space: nowrap;
+  transition: transform 0.5s ease-out, opacity 0.5s ease-out;
+  opacity: 0;
+}
+
+.scroll-text5 {
+  position: fixed;
+  z-index: 10;
+  top: 25%;
+  left: 25%;
+  transform: translateX(-100%);
+  white-space: nowrap;
+  transition: transform 0.5s ease-out, opacity 0.5s ease-out;
+  opacity: 0;
+}
+
+
+.scroll-text6 {
+  position: fixed;
+  z-index: 10;
+  height: 8vw;
+  top: 37%;
+  left: 14%;
+  transform: translateX(-100%);
+  white-space: nowrap;
+  transition: transform 0.5s ease-out, opacity 0.5s ease-out;
+  opacity: 0;
+}
+
+.scroll-text7 {
+  font-size: 1.5vw;
+  color: white;
+  position: fixed;
+  z-index: 10;
+  top: 56%;
+  left: 14%;
+
+}
+
+  #scrollText7 {
+    visibility: hidden;
+  }
+
+  .fade-in-char {
+    opacity: 0;
+    animation: fadeIn 0.5s forwards;
+  }
+
+  @keyframes fadeIn {
+    to {
+      opacity: 1;
+    }
+  }
+
+
+
+
+
+
+
+
+
+#scrollImage {
+  position: absolute;
+  height: 34vw;
+  margin-top: 100vw;
+  z-index: 9998;
+}
+
+
+#scrollImage2 {
+    opacity: 0;
+    transition: opacity 1s ease;
+    position: fixed;
+    z-index:100;
+    top: 20%;
+    left: 10%;
+    height:500vw;
+}
+
+
+
+
+
+#buttons {
+    position: fixed;
+    bottom: 5vw;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 80px;
+    width: 100%;
+    z-index: 999;
+}
+
+
+
+#Button1 {
+    padding: 0.8vw 1.5vw;
+    background-color: #FEBC01;
+    color: #212121;
+    border: none;
+    border-radius: 10px;
+    font-size: 1vw;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    transition: background-color 0.3s ease;
+
+}
+#Button1:hover {
+    background-color: #E6B864;
+}
+
+#Button1:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+
+
+
+
+
+
+
+
+#Button2 {
+    padding: 0.8vw 1.5vw;
+    background-color: #FEBC01;
+    color: #212121;
+    border: none;
+    border-radius: 10px;
+    font-size: 1vw;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    transition: background-color 0.3s ease;
+    position: sticky;
+    z-index: 10;
+}
+
+#Button2:hover {
+    background-color: #E6B864;
+}
+
+#Button2:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#buttons2 {
+    position: fixed;
+    top : 7vw;
+    left : 25vw;
+    display: flex;
+    flex-direction: row;
+    gap: 80px;
+    width: 100%;
+    z-index: 999;
+}
+
+#Button3 {
+    padding: 0.8vw 1.5vw;
+    background-color: #FEBC01;
+    color: #212121;
+    border: none;
+    border-radius: 10px;
+    font-size: 1vw;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+#Button3:hover {
+    background-color: #E6B864;
+  }
+#Button3:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+
+
+
+
+
+
+#Button4 {
+    padding: 0.8vw 1.5vw;
+    background-color: #FEBC01;
+    color: #212121;
+    border: none;
+    border-radius: 10px;
+    font-size: 1vw;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    opacity: 0;           /* 처음엔 안 보이게 */
+    pointer-events: none; /* 클릭도 안 되게 처리 */
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    z-index : 100;
+  }
+
+#Button4:hover {
+    background-color: #E6B864;
+}
+#Button4:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+
+
+@keyframes fadeInUp {
+from {
+    opacity: 0;
+    transform: translateY(30px);
+    }
+to {
+    opacity: 1;
+    transform: translateY(0);
+    }
+   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#AnimationImage {
+  position: absolute;
+  margin-top: 105vw;
+  margin-left: 17vw;
+  z-index: 9999;
+  transition: opacity 1s ease, transform 1s ease;
+}
+
+#AnimationImage2 {
+  position: absolute;
+  margin-top: 105vw;
+  margin-left: 29vw;
+  z-index: 9999;
+  transition: opacity 1s ease, transform 1s ease;
+}
+
+#AnimationImage3 {
+  position: absolute;
+  margin-top: 105vw;
+  margin-left: 41vw;
+  z-index: 9999;
+  transition: opacity 1s ease, transform 1s ease;
+}
+
+#AnimationImage4 {
+  position: absolute;
+  margin-top: 106vw;
+  margin-left: 53vw;
+  z-index: 9999;
+  transition: opacity 1s ease, transform 1s ease;
+}
+
+#AnimationImage5 {
+  position: absolute;
+  margin-top: 117vw;
+  margin-left: 43vw;
+  z-index: 9999;
+  transition: opacity 1s ease, transform 1s ease;
+}
+
+#AnimationImage6 {
+  position: absolute;
+  margin-top: 120vw;
+  margin-left: 32vw;
+  z-index: 9999;
+  transition: opacity 1s ease, transform 1s ease;
+}
+
+#AnimationImage7 {
+  position: absolute;
+  margin-top: 120vw;
+  margin-left: 38vw;
+  z-index: 9999;
+  transition: opacity 1s ease, transform 1s ease;
+}
+
+#AnimationImage8 {
+  position: absolute;
+  margin-top: 120vw;
+  margin-left: 48vw;
+  z-index: 9999;
+  transition: opacity 1s ease, transform 1s ease;
+}
+
+#AnimationImage9 {
+  position: absolute;
+  margin-top: 120vw;
+  margin-left: 57vw;
+  z-index: 9999;
+  transition: opacity 1s ease, transform 1s ease;
+}
+
+.hidden {
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.hidden2 {
+  opacity: 0;
+  transform: translateX(-100px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.show {
+  opacity: 1;
+  transform: translateY(0);
+}

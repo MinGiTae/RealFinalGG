@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}건설 현장 관리{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/GG_003_csr.css" />
+{% endblock %}
+
+{% block content %}
+
+<!-- 플래시 메시지 -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-message-wrapper">
+      {% for category, message in messages %}
+        <div class="flash-message {{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<br><br><br><br>
+<div class="flex-wrapper" style="flex-wrap: wrap; justify-content: space-around;">
+
+  <!-- 지도 영역 (더 크게 확장) -->
+  <div id="map" style="width: 1200px; height: 800px; background-color:white; position:relative;">
+    <input id="search-input4" placeholder="현장명 검색" />
+    <div id="autocomplete-results"></div>
+    <button type="button" id="Button5">현장으로 이동</button>
+  </div>
+
+  <!-- 리모컨 스타일 등록/수정/삭제 폼 -->
+  <div class="container" style="position: absolute; top: 120px; right: 60px; width: 350px; background: rgba(255,255,255,0.95); border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); z-index: 1000; padding: 20px;">
+    <div class="title-container">
+      <h1 style="color:#212121; font-size: 20px; text-align: center;">건설 현장 등록·수정·삭제</h1>
+    </div>
+
+    <div class="div1" style="background: none; box-shadow: none; padding: 0;">
+      <form id="siteForm" method="POST" action="/csr/register_site">
+        <div id="search-box">
+          <label for="search-input1">현장명</label><br>
+          <input type="text" name="site_name" id="search-input1" placeholder="건설현장이름을 입력하세요" required /><br>
+
+          <label for="search-input2">주소</label><br>
+          <input type="text" name="address" id="search-input2" placeholder="건설현장주소를 입력하세요" required /><br>
+
+          <label for="search-input3">담당자명</label><br>
+          <input type="text" name="manager_name" id="search-input3" placeholder="담당자를 입력하세요" required /><br>
+
+          <input type="hidden" name="site_id" id="site_id" value="" />
+          <input type="hidden" name="latitude" id="latitude" />
+          <input type="hidden" name="longitude" id="longitude" />
+
+          <label for="companySelect">회사 선택</label><br>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <select name="company_id" id="companySelect">
+              {% for company in companies %}
+                <option value="{{ company.company_id }}">{{ company.company_name }}</option>
+              {% endfor %}
+            </select>
+            <button type="button" id="openCompanyModal">+ 회사 추가</button>
+            <button type="button" id="deleteCompany">- 회사 삭제</button>
+          </div>
+        </div>
+
+        <div class="button-group" style="margin-top: 15px; display: flex; justify-content: space-between;">
+          <button type="submit" id="Button1">Create</button>
+          <button type="button" id="ButtonUpdate">Update</button>
+          <button type="button" id="ButtonDelete">Delete</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- 회사 등록 모달 -->
+<div id="companyModal" class="modal" style="display:none;">
+  <form method="POST" action="/csr/register_company">
+    <h2>회사 등록</h2>
+    <label>회사명</label><br>
+    <input type="text" name="company_name" required><br><br>
+    <label>주소</label><br>
+    <input type="text" name="address"><br><br>
+    <label>대표자명</label><br>
+    <input type="text" name="ceo_name"><br><br>
+    <label>연락처</label><br>
+    <input type="text" name="contact"><br><br>
+    <div style="text-align:right;">
+      <button type="submit">등록</button>
+      <button type="button" onclick="document.getElementById('companyModal').style.display='none'">닫기</button>
+    </div>
+  </form>
+</div>
+
+<!-- Kakao Maps SDK -->
+<script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=30b3dfc1e244b48dfa1c16cec788c438&libraries=services"></script>
+<!-- 커스텀 JS -->
+<script src="/static/js/GG_003_csr.js"></script>
+<script>
+  document.getElementById('openCompanyModal').onclick = function() {
+    document.getElementById('companyModal').style.display = 'block';
+  };
+</script>
+
+{% endblock %}

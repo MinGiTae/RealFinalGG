@@ -1,0 +1,188 @@
+/* ==================== GG_006_createlift.css ==================== */
+
+/* 기본 레이아웃 & 공통 스타일 */
+#character {
+  position: fixed;
+  top: 0;
+  left: 0;
+  font-size: 40px;
+  pointer-events: none;
+  transition: transform 0.1s linear;
+  z-index: 9999;
+}
+#container {
+  display: flex;
+  justify-content: center;
+}
+#search-box {
+  top: 15%;
+  left: 10%;
+  width: 450px;
+  height: 50px;
+  gap: 10px;
+  z-index: 999;
+}
+#search-input {
+  width: 300px;
+  padding: 10px 15px;
+  font-size: 16px;
+  border: 2px solid #ccc;
+  border-radius: 10px;
+}
+#search-button {
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #ffcc00;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+#search-results {
+  position: absolute;
+  top: 20%;
+  left: 10%;
+  margin: 20px auto;
+  padding: 20px;
+  width: 50%;
+  max-width: 400px;
+  background-color: #333;
+  color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  display: none;
+  font-size: 18px;
+}
+
+/* 콤보박스 (회사 + 현장) 스타일 */
+#company-select,
+#site-select {
+  width: 320px;
+  padding: 10px 15px;
+  font-size: 16px;
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  background-color: #fff;
+  color: #212121;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+/* 체크리스트 컨테이너 */
+.table-container0 { /* 기존 테이블 컨테이너 스타일 유지 */ }
+.table-container {
+  width: 70em;
+  height: 33em;
+  padding: 20px;
+  background-color: #525252;
+  border-radius: 8px;
+  display: flex;
+  gap: 50px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.table-column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 8px;
+}
+.table-column .header {
+  font-weight: bold;
+  color: #FFD700;
+  text-align: center;
+  margin-bottom: 5px;
+}
+.table-column .row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background-color: #3a3a3a;
+  color: white;
+  border-radius: 6px;
+  width: 470px;
+}
+.table-container2 {
+  width: 70em;
+  padding: 20px;
+  background-color: #525252;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 3em;
+}
+#result-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: white;
+  font-size: 15px;
+}
+#result-table th, #result-table td {
+  padding: 10px;
+  text-align: center;
+  border-bottom: 1px solid #444;
+}
+#result-table thead {
+  background-color: #3a3a3a;
+  color: #FFD700;
+}
+#result-table tbody tr:nth-child(even) { background-color: #444; }
+#result-table tbody tr:nth-child(odd)  { background-color: #2e2e2e; }
+
+/* 팝업 & 버튼 */
+#fixed img { width: 70px; height: 70px; cursor: pointer; }
+#popup { /* 기존 팝업 스타일 유지 */ }
+#Button { display: flex; justify-content: flex-end; gap: 10px; margin: 20px; }
+#Button1, #Button2, #Button3 {
+  padding: 15px 30px;
+  background-color: #ffcc00;
+  color: #212121;
+  border: none;
+  border-radius: 10px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  transition: background-color 0.3s ease;
+}
+#Button1:hover, #Button2:hover, #Button3:hover { background-color: #E6B864; }
+
+/* 화살표 */
+#arrow {
+  position: absolute;
+  width: 40px;
+  transition: top 0.3s ease, left 0.3s ease;
+  display: none;
+}
+
+/* 체크 원 상태 */
+.status-circle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: gray;
+  margin-left: 10px;
+  vertical-align: middle;
+  transition: background-color 0.3s, box-shadow 0.3s;
+}
+.status-circle.checked   { background-color: #00c300; box-shadow: 0 0 5px #00c300; }
+.status-circle.unchecked { background-color: #ff3b3b; box-shadow: 0 0 5px #ff3b3b; }
+
+#site-list-container { margin: 30px; text-align: center; width: 500px; }
+#search-container { display: flex; }
+#site-list-title { font-size: 21px; font-weight: bold; color: #FFD700; }
+
+/* 선택 정보 텍스트 꾸미기 */
+#selected-info {
+  margin-top: 15px;                  /* 위쪽 여백 */
+  padding: 8px 12px;                 /* 안쪽 여백 */
+  font-size: 18px;                   /* 글자 크기 */
+  font-weight: bold;                 /* 글자 굵기 */
+  color: #FFD700;                    /* 황금색 텍스트 */
+  background-color: rgba(255,255,255,0.1); /* 반투명 배경 */
+  border-radius: 6px;                /* 모서리 둥글게 */
+  text-align: center;                /* 가운데 정렬 */
+  display: inline-block;             /* 가로 크기만큼만 감싸도록 */
+}

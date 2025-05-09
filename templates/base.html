@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}GarbageGuard{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}">
+  {% block extra_css %}{% endblock %}
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<nav id="menubar">
+  <div class="center-box">
+    <div id="logo">
+      <a href="/">
+        <img src="{{ url_for('static', filename='img/logo2.png') }}" alt="GarbageGuard Logo" height="30px"/>
+      </a>
+    </div>
+    <div id="menu1">
+      <ul>
+
+        <li><a href="/">Main</a></li>
+        <li><a href="/upload/waste_disposal">Waste Disposal</a></li>
+        <li><a href="{{ url_for('csr.show_csr') }}">Construction Site Registration</a></li>
+        <li><a href="/gallery">Detection Gallery</a></li>
+        <li><a href="/recycle">Recycle</a></li>
+
+<!--        <li class="menu-waste">-->
+<!--          <a href="/upload/waste_disposal">Waste</a>-->
+<!--          <div class="submenu">-->
+<!--            <a href="{{ url_for('csr.show_csr') }}">Site Registration</a>-->
+<!--            <a href="/gallery">Detection Gallery</a>-->
+<!--          </div>-->
+<!--        </li>-->
+
+        <li><a href="/analytics">Statistics</a></li>
+        <li><a href="/Create_lift">Report</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main>
+  {% block content %}{% endblock %}
+</main>
+
+<footer>
+</footer>
+
+</body>
+</html>

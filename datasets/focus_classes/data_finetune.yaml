@@ -1,0 +1,9 @@
+# C:/Users/minhw/GarbageGuard/datasets/focus_classes/data_finetune.yaml
+
+path: C:/Users/minhw/GarbageGuard/datasets/focus_classes/focus_classes_dataset
+train: images/train
+val: images/train
+
+nc: 10
+names: ["brick", "concrete", "foam", "general_w", "gypsum_board",
+        "pipes", "plastic", "stone", "tile", "wood"]

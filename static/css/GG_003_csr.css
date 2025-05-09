@@ -1,0 +1,273 @@
+/* 캐릭터 이모지 (사용 중이면 유지) */
+#character {
+  position: fixed;
+  top: 0;
+  left: 0;
+  font-size: 40px;
+  pointer-events: none;
+  transition: transform 0.1s linear;
+  z-index: 9999;
+}
+
+/* 지도 영역 */
+#map {
+  border-radius: 15px;
+  position: relative;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+.flex-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+}
+
+.container {
+  width: 300px;
+}
+
+.title-container {
+  width: 100%;
+  height: 50px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+
+.div1 {
+  width: 100%;
+  background-color: #f5f5f5;
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  color: #212121;
+  box-sizing: border-box;
+}
+
+/* 리모컨 카드 전용 스타일 */
+.container[style*="position: absolute"] {
+  background: rgba(255,255,255,0.95);
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  padding: 20px;
+  width: 350px;
+  z-index: 1000;
+}
+
+/* 입력창 */
+#search-input1,
+#search-input2,
+#search-input3 {
+  margin-bottom: 10px;
+  width: 100%;
+  padding: 10px 15px;
+  font-size: 16px;
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+
+#search-input4 {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: 180px;
+  height: 35px;
+  padding: 0 15px;
+  border-radius: 25px;
+  border: 2px solid #3f9d9e;
+  background-color: #f1f1f1;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+  z-index: 500;
+  box-sizing: border-box;
+}
+
+#Button5 {
+  position: absolute;
+  top: 20px;
+  left: 210px;
+  height: 35px;
+  padding: 0 15px;
+  font-size: 14px;
+  background-color: #3f9d9e;
+  color: white;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 500;
+  box-sizing: border-box;
+}
+
+#Button5:hover {
+  background-color: #33c1b1;
+  box-shadow: 0 6px 12px rgba(51, 193, 177, 0.4);
+}
+
+/* 자동완성 리스트 */
+#autocomplete-results {
+  display: none;
+  position: absolute;
+  top: 60px;
+  left: 20px;
+  width: 180px;
+  background-color: white;
+  border: 1px solid #ccc;
+  max-height: 150px;
+  overflow-y: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.autocomplete-item {
+  padding: 10px 15px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.2s ease;
+}
+
+.autocomplete-item:hover {
+  background-color: #f5f5f5;
+}
+
+.autocomplete-item:last-child {
+  border-bottom: none;
+}
+
+/* 버튼 */
+#Button1,
+#ButtonUpdate,
+#ButtonDelete {
+  padding: 10px 24px;
+  background-color: #ffcc00;
+  color: #212121;
+  border: none;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+#Button1:hover,
+#ButtonUpdate:hover,
+#ButtonDelete:hover {
+  background-color: #E6B864;
+}
+
+/* 회사 선택 셀렉트박스 */
+#companySelect {
+  padding: 8px 12px;
+  font-size: 14px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background-color: white;
+  color: #212121;
+  box-sizing: border-box;
+}
+
+#openCompanyModal {
+  padding: 8px 12px;
+  background-color: #ffcc00;
+  color: #212121;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+#openCompanyModal:hover {
+  background-color: #e6b864;
+}
+
+/* 플래시 메시지 */
+.flash-message-wrapper {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2000;
+  width: auto;
+  max-width: 90%;
+  text-align: center;
+}
+
+.flash-message {
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: bold;
+  background-color: #d4edda;
+  color: #155724;
+  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+  display: inline-block;
+}
+
+.flash-message.success {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.flash-message.error {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+/* 모달 */
+.modal {
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  z-index: 2000;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  width: 350px;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.modal h2 {
+  font-size: 22px;
+  margin-bottom: 20px;
+  color: #212121;
+  text-align: center;
+}
+
+.modal input[type="text"] {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 14px;
+  font-size: 15px;
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+
+.modal .modal-actions {
+  text-align: right;
+}
+
+.modal button {
+  padding: 10px 20px;
+  background-color: #ffcc00;
+  color: #212121;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  margin-left: 10px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.modal button:hover {
+  background-color: #e6b864;
+}
