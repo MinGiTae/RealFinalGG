@@ -64,7 +64,15 @@ html, body{
   animation-delay: 0.5s;
 }
 
-
+#waste {
+  height : 18vw;
+  position: fixed;
+  left: 63vw;
+  top : 28vw;
+  z-index: 200;
+  animation: fadeInUp 1s ease forwards;
+  animation-delay: 0.5s;
+}
 
 
 
@@ -140,8 +148,8 @@ html, body{
 .scroll-text6 {
   position: fixed;
   z-index: 10;
-  height: 8vw;
-  top: 37%;
+  height: 10vw;
+  top: 36%;
   left: 14%;
   transform: translateX(-100%);
   white-space: nowrap;
@@ -195,9 +203,9 @@ html, body{
     transition: opacity 1s ease;
     position: fixed;
     z-index:100;
-    top: 20%;
+    top: 10%;
     left: 10%;
-    height:500vw;
+
 }
 
 

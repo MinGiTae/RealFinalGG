@@ -12,7 +12,7 @@
 
 <img id="crain" src="/static/img/crain.png" alt="crain"/>
 
-
+<img id="waste" src="/static/img/waste.png" alt="waste"/>
 
 
 
@@ -25,12 +25,10 @@
 
 
 
-<h3 class="scroll-text4" id="scrollText4" style="font-size: 2.5vw; color: #FEBC01;"><a style="font-size: 4vw;">탄</a>소중립 </h3>
-<h3 class="scroll-text5" id="scrollText5" style="font-size: 1.5vw; color: white;">이제 기술로 대응할 때입니다.</h3>
+<h3 class="scroll-text4" id="scrollText4" style="font-size: 2vw; color: #FEBC01;"><a style="font-size: 4vw;">탄</a>소중립 이제 기술로 대응할 때입니다.</h3>
+<h3 class="scroll-text5" id="scrollText5" style="font-size: 1.5vw; color: white;"></h3>
 <img class="scroll-text6" id="scrollText6" src="/static/img/why.png" alt="why"/>
-<h3 class="scroll-text7" id="scrollText7">건설 폐기물은 전체의 38%를 차지하며, 탄소 배출의 주요 원인입니다. <br>
-                                                                                  GarbageGuard는 AI로 실시간 탐지하고<br>
-                                                                                  ISO 14001 양식의 자동 보고서를 생성해 탄소중립 실현을 지원합니다.
+<h3 class="scroll-text7" id="scrollText7">건설 폐기물은 전체의 38%를 차지하며, 탄소 배출의 주요 원인입니다. <br>GarbageGuard는 AI로 실시간 탐지하고<br>ISO 14001 양식의 자동 보고서를 생성해 탄소중립 실현을 지원합니다.
 </h3>
 
 
@@ -50,15 +48,15 @@
 <img id="AnimationImage9" class="hidden2" src="/static/img/3P2_9.png" alt="New Image" >
 
 <div id="buttons">
-  <button id="Button1" onclick="location.href='/upload/waste_disposal'">사진 업로드 시작</button>
-  <button id="Button2" onclick="location.href='{{ url_for('csr.show_csr') }}'">현장 등록하기</button>
+  <button id="Button1" onclick="location.href='{{ url_for('csr.show_csr') }}'">현장 등록하기</button>
+  <button id="Button2" onclick="location.href='/upload/waste_disposal'">사진 업로드 시작</button>
 </div>
 
 
 
 <div id="buttons2">
-  <button id="Button3" onclick="location.href='/upload/waste_disposal'">사진 업로드 시작</button>
-  <button id="Button4" onclick="location.href='{{ url_for('csr.show_csr') }}'">현장 등록하기</button>
+  <button id="Button3" onclick="location.href='{{ url_for('csr.show_csr') }}'">현장 등록하기</button>
+  <button id="Button4" onclick="location.href='/upload/waste_disposal'">사진 업로드 시작</button>
 </div>
 <!-- JS 연결 -->
 <script type="text/javascript" src="{{ url_for('static', filename='js/GG_001_main.js') }}"></script>
