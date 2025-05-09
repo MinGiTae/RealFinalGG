@@ -1,0 +1,22 @@
+# 가상환경
+../GarbageGuard/.venv1/
+
+# 파이썬 불필요 아티팩트
+__pycache__/
+*.pyc
+
+# 모델 가중치
+*.pt
+
+# YOLO 러닝 결과
+runs/
+
+# 학습·실험용 데이터셋
+../RealFinalGG/datasets/
+
+# 테스트용 이미지
+test_images/
+
+# 사용자 업로드(예: 갤러리)
+uploads/
+static/uploads/
