@@ -1,4 +1,8 @@
-// 지도 초기화
+// GG_003_csr.js
+// ----------------------------------------
+
+document.addEventListener('DOMContentLoaded', () => {
+  // 1) 지도 초기화
   const mapContainer = document.getElementById('map');
   const map = new kakao.maps.Map(mapContainer, {
     center: new kakao.maps.LatLng(36.348504088450035, 127.38215399734425),
@@ -7,11 +11,11 @@
   const geocoder = new kakao.maps.services.Geocoder();
 
   setTimeout(() => {
-  map.relayout();
-  map.setCenter(new kakao.maps.LatLng(36.348504088450035, 127.38215399734425));
+    map.relayout();
+    map.setCenter(new kakao.maps.LatLng(36.348504088450035, 127.38215399734425));
   }, 100);
 
-  // 입력 폼 요소
+  // 2) 입력 폼 요소
   const inputSiteId    = document.getElementById('site_id');
   const inputName      = document.getElementById('search-input1');
   const inputAddress   = document.getElementById('search-input2');
@@ -19,7 +23,11 @@
   const inputLatitude  = document.getElementById('latitude');
   const inputLongitude = document.getElementById('longitude');
 
-  // 마커 저장용
+  // 3) 자동완성 & 검색 요소
+  const inputSearch4 = document.getElementById('search-input4');
+  const resultsBox  = document.getElementById('autocomplete-results');
+
+  // 4) 마커 저장용
   const markers     = [];
   const infowindows = [];
   let selectedMarker     = null;
@@ -27,7 +35,7 @@
   let tempMarker         = null;
   let siteNames          = [];
 
-  // 마커 클릭 시 폼 채우기
+  // 5) 마커 클릭 시 폼 채우기
   function openMarker(marker) {
     const data = markers.find(m => m.marker === marker);
     if (!data) return;
@@ -46,7 +54,6 @@
       );
       selectedInfowindow.close();
     }
-
     selectedMarker = marker;
     selectedInfowindow = infowindows[markers.indexOf(data)];
     selectedMarker.setImage(
@@ -55,7 +62,7 @@
     selectedInfowindow.open(map, marker);
   }
 
-  // 1) DB에서 저장된 마커 불러오기
+  // 6) DB에서 저장된 마커 불러오기
   fetch('/csr/get_sites')
     .then(res => res.json())
     .then(list => {
@@ -64,7 +71,7 @@
         const markerImage = new kakao.maps.MarkerImage('/static/img/hammer.png', new kakao.maps.Size(40, 40));
         const marker = new kakao.maps.Marker({ position: coords, map, image: markerImage });
         const iw = new kakao.maps.InfoWindow({
-          content: `<div style="width:150px;text-align:center;padding:6px 0;">${site.site_name}</div>`
+          content: `<div style=\"width:150px;text-align:center;padding:6px 0;\">${site.site_name}</div>`
         });
         iw.open(map, marker);
 
@@ -82,7 +89,7 @@
       });
     });
 
-  // 2) 지도 클릭 → 임시 마커, 주소/좌표 채우기
+  // 7) 지도 클릭 → 임시 마커, 주소/좌표 채우기
   kakao.maps.event.addListener(map, 'click', e => {
     const pos = e.latLng;
     geocoder.coord2Address(pos.getLng(), pos.getLat(), (res, status) => {
@@ -106,11 +113,9 @@
     });
   });
 
-  // 3) 신규 현장 등록 (폼 submit)
-  //    - 버튼이 type="submit" 이므로 별도 JS 불필요
-
-  // 4) 현장 정보 수정
-  document.getElementById('ButtonUpdate').addEventListener('click', () => {
+  // 8) 현장 정보 수정
+  const btnUpdate = document.getElementById('ButtonUpdate');
+  if (btnUpdate) btnUpdate.addEventListener('click', () => {
     const siteId      = parseInt(inputSiteId.value);
     const siteName    = inputName.value.trim();
     const address     = inputAddress.value.trim();
@@ -123,12 +128,7 @@
     fetch('/csr/update_site', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        site_id:      siteId,
-        site_name:    siteName,
-        address:      address,
-        manager_name: managerName
-      })
+      body: JSON.stringify({ site_id: siteId, site_name: siteName, address, manager_name: managerName })
     })
     .then(r => r.json())
     .then(res => {
@@ -141,8 +141,9 @@
     });
   });
 
-  // 5) 현장 삭제
-  document.getElementById('ButtonDelete').addEventListener('click', () => {
+  // 9) 현장 삭제
+  const btnDelete = document.getElementById('ButtonDelete');
+  if (btnDelete) btnDelete.addEventListener('click', () => {
     const siteId = parseInt(inputSiteId.value);
     if (!siteId) {
       alert("삭제할 현장을 선택하세요.");
@@ -165,69 +166,73 @@
     });
   });
 
-  // 6) 현장명 자동완성
-  const inputSearch4 = document.getElementById('search-input4');
-  const resultsBox  = document.getElementById('autocomplete-results');
-
-  inputSearch4.addEventListener('input', () => {
-    const q = inputSearch4.value.trim().toLowerCase();
-    if (!q) {
-      resultsBox.style.display = 'none';
-      return;
-    }
-    const filtered = siteNames.filter(name => name.toLowerCase().startsWith(q));
-    if (filtered.length) {
-      resultsBox.style.display = 'block';
-      resultsBox.innerHTML = filtered.map(name => `<div class="autocomplete-item">${name}</div>`).join('');
-      document.querySelectorAll('.autocomplete-item').forEach(item => {
-        item.addEventListener('click', () => {
+  // 10) 현장명 자동완성 및 이동
+  if (inputSearch4 && resultsBox) {
+    inputSearch4.addEventListener('input', () => {
+      const q = inputSearch4.value.trim().toLowerCase();
+      if (!q) {
+        resultsBox.style.display = 'none';
+        return;
+      }
+      const filtered = siteNames.filter(name => name.toLowerCase().startsWith(q));
+      if (filtered.length) {
+        resultsBox.style.display = 'block';
+        resultsBox.innerHTML = filtered.map(name => `<div class=\"autocomplete-item\">${name}</div>`).join('');
+        document.querySelectorAll('.autocomplete-item').forEach(item => item.addEventListener('click', () => {
           inputSearch4.value = item.textContent;
           resultsBox.style.display = 'none';
-        });
-      });
-    } else {
-      resultsBox.style.display = 'none';
-    }
-  });
-
-  inputSearch4.addEventListener('keydown', e => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      const name = inputSearch4.value.trim();
-      const data = markers.find(m => m.siteName === name);
-      if (data) map.setCenter(data.marker.getPosition());
-      resultsBox.style.display = 'none';
-    }
-  });
-
-  // 7) 검색된 현장으로 이동
-  document.getElementById('Button5').addEventListener('click', () => {
-    const name = inputSearch4.value.trim();
-    const data = markers.find(m => m.siteName === name);
-    if (data) {
-      map.setCenter(data.marker.getPosition());
-      if (selectedMarker) {
-        selectedMarker.setImage(new kakao.maps.MarkerImage('/static/img/hammer.png', new kakao.maps.Size(40, 40)));
-        selectedInfowindow.close();
+        }));
+      } else {
+        resultsBox.style.display = 'none';
       }
-      openMarker(data.marker);
-    } else {
-      alert("해당 현장을 찾을 수 없습니다.");
-    }
-    resultsBox.style.display = 'none';
- });
+    });
+    inputSearch4.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const data = markers.find(m => m.siteName === inputSearch4.value.trim());
+        if (data) map.setCenter(data.marker.getPosition());
+        resultsBox.style.display = 'none';
+      }
+    });
+    const btnSearch = document.getElementById('Button5');
+    if (btnSearch) btnSearch.addEventListener('click', () => {
+      const data = markers.find(m => m.siteName === inputSearch4.value.trim());
+      if (data) {
+        map.setCenter(data.marker.getPosition());
+        if (selectedMarker) {
+          selectedMarker.setImage(
+            new kakao.maps.MarkerImage('/static/img/hammer.png', new kakao.maps.Size(40,40))
+          );
+          selectedInfowindow.close();
+        }
+        openMarker(data.marker);
+      } else {
+        alert("해당 현장을 찾을 수 없습니다.");
+      }
+      resultsBox.style.display = 'none';
+    });
+  }
 
- document.getElementById('deleteCompany').addEventListener('click', () => {
-  const select = document.getElementById('companySelect');
-  const selectedOption = select.options[select.selectedIndex];
-  const companyId = selectedOption.value;
-  const companyName = selectedOption.textContent;
+  // 11) 회사 모달 오픈
+  const companyModal = document.getElementById('companyModal');
+  const btnOpenCompany = document.getElementById('openCompanyModal');
+  if (btnOpenCompany && companyModal) {
+    btnOpenCompany.addEventListener('click', () => {
+      companyModal.style.display = 'block';
+    });
+  }
 
-  if (confirm(`정말로 회사 "${companyName}"을(를) 삭제하시겠습니까?`)) {
+  // 12) 회사 삭제
+  const btnDelCompany = document.getElementById('deleteCompany');
+  if (btnDelCompany) btnDelCompany.addEventListener('click', () => {
+    const sel = document.getElementById('companySelect');
+    const opt = sel.options[sel.selectedIndex];
+    if (!opt) return;
+    if (!confirm(`회사 "${opt.textContent}"을(를) 삭제하시겠습니까?`)) return;
     fetch('/csr/delete_company', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ company_id: parseInt(companyId) })
+      body: JSON.stringify({ company_id: parseInt(opt.value) })
     })
     .then(r => r.json())
     .then(res => {
@@ -238,9 +243,16 @@
         alert("❌ 삭제 실패: " + res.error);
       }
     });
-  }
-});
+  });
+
+  // 13) 패널 접기/펼치기 애니메이션
+  const panel = document.getElementById('controlPanel');
+  const toggleBtn = panel.querySelector('.toggle-button');
+  if (toggleBtn) toggleBtn.addEventListener('click', () => panel.classList.toggle('collapsed'));
+
+  // 14) 플래시 메시지 숨김
   setTimeout(() => {
     const flash = document.querySelector('.flash-message-wrapper');
     if (flash) flash.style.display = 'none';
-  }, 3000);  // 3초 후 사라짐
+  }, 3000);
+});
