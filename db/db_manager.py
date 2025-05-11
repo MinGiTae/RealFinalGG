@@ -1,8 +1,18 @@
+import os
 import pymysql
 import pymysql.cursors
 from datetime import datetime
 
-# ✅ DB 연결 함수 (공통)
+# for Excel download
+import pandas as pd
+import openpyxl
+from flask import current_app
+from io import BytesIO
+
+# Flask 관련
+from flask import current_app, send_file
+
+# ===================== 공통 DB 연결 =====================
 def get_connection():
     return pymysql.connect(
         host="localhost",
@@ -320,3 +330,178 @@ def insert_waste_management(
         ))
         conn.commit()
     conn.close()
+
+def get_images_for_site(company_name: str, site_name: str) -> list:
+    site_id = get_site_id_by_name(site_name)
+    if site_id is None:
+        return []
+    return get_photos_by_site(site_id)
+
+
+def analyze_environmental_aspects(images: list) -> list:
+    results = []
+
+    # EMP-301 (1~5)
+    results.append(len(images) > 0)  # 1
+    results.append(any(img.get('detection_summary') for img in images))  # 2
+    results.append(len(images) > 5)  # 3
+    results.append(True)  # 4
+    results.append(len(images) > 0)  # 5
+
+    # EMP-408 (6~8)
+    results.append(any('폐기물' in img.get('detection_summary', '') for img in images))  # 6
+    results.append(True)  # 외주업체 요구사항 전달 여부는 DB에서 따로 가능함 (예시로 True)
+    results.append(True)  # 운영 기준 명시는 시스템 기준 정의 시 True
+
+    # EMP-501 (9~12)
+    results.append(len(images) >= 3)  # 주요 환경특성 파악 여부
+    results.append(True)  # 측정 주기 (업로드 주기 비교 기반 가능, 예시 True)
+    results.append(True)  # 법적 기준 만족 여부는 수치가 없어서 예시 True
+    results.append(any('장비' in img.get('detection_summary', '') for img in images))  # 교정/검증 기록
+
+    # EMP-504 (13~16)
+    results.append(True)  # 기록 존재 여부
+    results.append(True)  # 절차 유무 (시스템 정의 기반)
+    results.append(True)  # 추적 가능 여부
+    results.append(True)  # 시스템 준수 여부 (조건부 True)
+
+    return results  # 총 16개
+
+
+def analyze_waste_requirements(images: list) -> list:
+    # 현재 사용 안 함
+    return []
+
+
+def insert_audit_session(company_id: int, site_id: int, performed_by: str) -> int:
+    conn = get_connection()
+    with conn.cursor() as cursor:
+        cursor.execute(
+            "INSERT INTO audit_sessions (site_id, company_id, performed_by) VALUES (%s, %s, %s)",
+            (site_id, company_id, performed_by)
+        )
+        session_id = cursor.lastrowid
+        conn.commit()
+    conn.close()
+    return session_id
+
+
+def insert_audit_result(session_id: int, item_type: str, item_index: int, is_pass: bool, comment: str = ''):
+    conn = get_connection()
+    with conn.cursor() as cursor:
+        cursor.execute(
+            """
+            INSERT INTO audit_results
+              (session_id, item_type, item_index, is_pass, comment)
+            VALUES (%s, %s, %s, %s, %s)
+            """,
+            (session_id, item_type, item_index, is_pass, comment)
+        )
+        conn.commit()
+    conn.close()
+
+
+def create_audit_report_excel(company_name: str, site_name: str) -> BytesIO:
+    from io import BytesIO
+    from datetime import datetime
+    import os
+    import openpyxl
+    from flask import current_app
+
+    tpl_path = os.path.join(current_app.root_path, 'datasets', 'templates', '감사체크리스트.xlsx')
+    wb = openpyxl.load_workbook(tpl_path)
+    ws = wb.active
+
+    def safe_write(r, c, v):
+        from openpyxl.cell.cell import MergedCell
+        cell = ws.cell(row=r, column=c)
+        if isinstance(cell, MergedCell):
+            for rng in ws.merged_cells.ranges:
+                if rng.min_row <= r <= rng.max_row and rng.min_col <= c <= rng.max_col:
+                    ws.cell(rng.min_row, rng.min_col, v)
+                    return
+        ws.cell(r, c, v)
+
+    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    for rng in ws.merged_cells.ranges:
+        val = str(ws.cell(rng.min_row, rng.min_col).value or '')
+        if '피감사팀' in val:
+            safe_write(rng.min_row, rng.min_col, f"{company_name} / {site_name}")
+        if '감사원' in val:
+            safe_write(rng.min_row, rng.min_col, '시스템 자동감사')
+        if '감사일자' in val:
+            safe_write(rng.min_row, rng.min_col, now)
+
+    images = get_images_for_site(company_name, site_name)
+    iso_checks = analyze_environmental_aspects(images)
+
+    # 헤더행 찾기
+    header_row = None
+    for row in ws.iter_rows(min_row=1, max_row=50):
+        for cell in row:
+            if str(cell.value).strip() == "감사항목":
+                header_row = cell.row
+                question_col = cell.column
+                break
+        if header_row:
+            break
+
+    if not header_row:
+        raise RuntimeError("템플릿에서 '감사항목' 헤더를 찾을 수 없습니다.")
+
+    # 열 인덱스 찾기
+    pass_col = fail_col = None
+    for idx, cell in enumerate(ws[header_row], start=1):
+        txt = str(cell.value or '').replace(' ', '')
+        if txt == '적합':
+            pass_col = idx
+        elif txt == '부적합':
+            fail_col = idx
+
+    if not all([pass_col, fail_col]):
+        raise RuntimeError("헤더에 '적합', '부적합' 열이 필요합니다.")
+
+    # 비교 대상 ISO 문항 리스트
+    iso_questions = [
+        '환경측면을 파악하기 위한 분야별 주관 부서는 설정되었는가?',
+        '환경측면/영향조사표 및 환경영향평가서, 환경영향등록부가 기록되고 기능별로 정리되어 있는가?',
+        '환경측면과 관련된 환경영향은 누락 없이 파악되고 있는가?',
+        '환경측면의 중요성에 대한 평가는 정해진 기준을 준수하는가?',
+        '중요한 환경영향과 관련된 환경측면에 대한 정보를 최신의 자료로 유지하고 있는가?',
+        '중요한 환경측면과 관련된 활동 및 운영이 식별되고 관련절차가 수립되고 기록되고 있는가?',
+        '외주업체와 계약자에게 관련된 요구사항을 전달하는 의사소통은 수립되어 있는가?',
+        '절차에 운영기준은 명시되고 있는가?',
+        '주요 환경특성을 파악하고 모니터링 하고 있는가?',
+        '환경 모니터링 및 측정은 계획된 주기로 실시하고 있는가?',
+        '주요 환경특성이 법적 기준을 만족하는가?',
+        '사용하고 있는 모니터링 및 측정 장비를 교정, 검증하며 관련기록을 유지하는가?',
+        '필요한 기록물을 작성 유지관리 하는가?',
+        '기록은 식별, 보관, 보호, 검색, 보유, 폐기에 대한 절차 및 유지관리 하는가?',
+        '기록은 읽기 쉽고 식별, 추적이 가능한가?',
+        '기록관리 시스템을 준수하고 있는가?'
+    ]
+
+    # '감사항목' 오른쪽 셀 기준으로 ○ 표시
+    for row in ws.iter_rows(min_row=header_row + 1, max_row=ws.max_row):
+        q_text = str(row[question_col].value or '').strip()  # 오른쪽 열 기준
+        if not q_text:
+            continue
+
+        for idx, standard_q in enumerate(iso_questions):
+            if q_text.replace(' ', '').replace('\n', '') in standard_q.replace(' ', ''):
+                result = iso_checks[idx]
+                target_col = pass_col if result else fail_col
+                safe_write(row[0].row, target_col, '○')
+                break
+
+    # 부적합 시트 생성
+    manual_ws = wb.create_sheet('수동확인필요')
+    manual_ws.append(['번호', '감사항목', '판단', '수동확인필요'])
+    for idx, (q, passed) in enumerate(zip(iso_questions, iso_checks), start=1):
+        if not passed:
+            manual_ws.append([idx, q, '부적합', '예'])
+
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+    return output
