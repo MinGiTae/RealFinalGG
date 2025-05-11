@@ -37,23 +37,36 @@
   padding-right: 100px;
 }
 
-.container4{
-  display: flex;/* ✅ 추가: 중앙 정렬 */
-  align-items: stretch;
-  justify-content: center; /* ✅ 추가: 수직 중앙 정렬 */
-  margin:30px;
-  gap:130px;/* ✅ 추가: 그래프 간 간격 */
-  padding: 40px 0;
+.container4 {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  margin: 40px;
+  gap: 20px;
+  padding-right: 100px;
+}
+
+.container4-1{}
+.container4-2 {
+
+  width: 650px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #191917;
+  border-radius: 8px;
+  height: 900px;
+  box-sizing: border-box;
+  margin-left:85px;
+
 
 }
+
 .container1,
 .container2,
 .container3 {
   padding: 0 100px;  /* ✅ 좌우 동일한 여백 */
 }
-
-
-.container4-1{}
 
 .chart-container{
   width: 300px;
@@ -107,23 +120,22 @@
 }
 
 .chart-container7{
-  width: 650px;
+  width: 560px;
   height: 400px;
   padding:20px;
-  margin: 10px;
   background-color:#191917;
   border-radius: 8px;
 }
 .chart-container8{
-  width: 650px;
+  width: 560px;
   height: 400px;
   padding:20px;
-  margin: 15px;
   background-color:#191917;
   border-radius: 8px;
+  margin-top:20px;
 }
 
-#korea-map svg{
+#korea-map {
 
   width: 530px;
   height: 630px;
@@ -247,11 +259,11 @@ canvas#topCompanyChart{
 }
 
 .dashboard-frame {
-  border: 2px dashed #666;
+
   padding: 40px;
   margin: 40px auto;
-  max-width: 1600px;
+  max-width: 1400px;
   border-radius: 12px;
-  background-color: rgba(255, 255, 255, 0.02); /* 살짝 반투명 배경 */
+  background-color: #212121; /* 살짝 반투명 배경 */
   box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
 }

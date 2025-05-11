@@ -7,7 +7,7 @@ def get_connection():
     return pymysql.connect(
         host="localhost",
         user="root",
-        password="0731",
+        password="0000",
         database="garbageguard",
         charset="utf8mb4",
         cursorclass=pymysql.cursors.DictCursor
@@ -240,7 +240,7 @@ def get_monthly_stats(site_id=None):
         if site_id:
             cursor.execute(
                 """
-                    SELECT DATE_FORMAT(disposal_date,'%%Y-%%m') AS month,
+                    SELECT DATE_FORMAT(disposal_date,'%Y-%m') AS month,
                            SUM(waste_amount) AS total_waste,
                            SUM(carbon_emission) AS total_emission
                       FROM waste_management
@@ -252,7 +252,7 @@ def get_monthly_stats(site_id=None):
         else:
             cursor.execute(
                 """
-                    SELECT DATE_FORMAT(disposal_date,'%%Y-%%m') AS month,
+                    SELECT DATE_FORMAT(disposal_date,'%Y-%m') AS month,
                            SUM(waste_amount) AS total_waste,
                            SUM(carbon_emission) AS total_emission
                       FROM waste_management
@@ -320,3 +320,172 @@ def insert_waste_management(
         ))
         conn.commit()
     conn.close()
+
+def get_emissions_by_waste_type(site_id=None):
+    conn = get_connection()
+    with conn.cursor() as cursor:
+        if site_id:
+            sql = """
+                SELECT waste_type, SUM(carbon_emission) AS total_emission
+                FROM waste_management
+                WHERE site_id = %s
+                GROUP BY waste_type
+            """
+            cursor.execute(sql, (site_id,))
+        else:
+            sql = """
+                SELECT waste_type, SUM(carbon_emission) AS total_emission
+                FROM waste_management
+                GROUP BY waste_type
+            """
+            cursor.execute(sql)
+        result = cursor.fetchall()
+    conn.close()
+    return result
+
+#폐기물 종류별 배출량 불러오는 함수
+def get_waste_amount_by_type(site_id=None):
+    conn = get_connection()
+    with conn.cursor() as cursor:
+        if site_id:
+            sql = """
+                SELECT waste_type, SUM(waste_amount) AS total_amount
+                FROM waste_management
+                WHERE site_id = %s
+                GROUP BY waste_type
+            """
+            cursor.execute(sql, (site_id,))
+        else:
+            sql = """
+                SELECT waste_type, SUM(waste_amount) AS total_amount
+                FROM waste_management
+                GROUP BY waste_type
+            """
+            cursor.execute(sql)
+        result = cursor.fetchall()
+    conn.close()
+    return result
+
+
+#월별 폐기물 순위
+def get_waste_percentage_current_month():
+    conn = get_connection()
+    with conn.cursor() as cursor:
+        # 현재 월 기준
+        now = datetime.now()
+        current_month = now.strftime('%Y-%m')
+
+        sql = """
+            SELECT waste_type, SUM(waste_amount) AS total
+            FROM waste_management
+            WHERE DATE_FORMAT(disposal_date, '%%Y-%%m') = %s
+            GROUP BY waste_type
+        """
+        cursor.execute(sql, (current_month,))
+        rows = cursor.fetchall()
+
+        total = sum(row['total'] for row in rows)
+        if total == 0:
+            return []
+
+        result = [
+            {
+                "waste_type": row["waste_type"],
+                "percentage": round((row["total"] / total) * 100)
+            }
+            for row in rows
+        ]
+
+    conn.close()
+    return result
+
+#건설사별 탄소 배출량
+def get_carbon_emission_by_company():
+    conn = get_connection()
+    with conn.cursor() as cursor:
+        sql = """
+            SELECT c.company_name, SUM(wm.carbon_emission) AS total_emission
+            FROM companies c
+            JOIN construction_sites cs ON c.company_id = cs.company_id
+            JOIN waste_management wm ON cs.site_id = wm.site_id
+            GROUP BY c.company_id, c.company_name
+            ORDER BY total_emission DESC
+        """
+        cursor.execute(sql)
+        result = cursor.fetchall()
+    conn.close()
+    return result
+
+#가장 많은 탄소를 배출한 건설사 조회함수
+def get_top_carbon_emitter_company():
+    conn = get_connection()
+    with conn.cursor() as cursor:
+        sql = """
+            SELECT c.company_name, SUM(wm.carbon_emission) AS total_emission
+            FROM companies c
+            JOIN construction_sites cs ON c.company_id = cs.company_id
+            JOIN waste_management wm ON cs.site_id = wm.site_id
+            GROUP BY c.company_id, c.company_name
+            ORDER BY total_emission DESC
+            LIMIT 1
+        """
+        cursor.execute(sql)
+        result = cursor.fetchone()
+    conn.close()
+    return result
+
+#해당 지역에 대한 건설현장 리스트를 조회하는 함수
+def get_monthly_emission_by_region(region_keyword: str):
+    region_keyword = region_keyword.replace("광역시", "").replace("특별시", "").replace("도", "").strip()
+    conn = get_connection()
+    with conn.cursor(pymysql.cursors.DictCursor)  as cursor:
+        # 월별 탄소 배출량 조회 SQL
+        sql = (
+            "SELECT cs.site_name, "
+            "DATE_FORMAT(wm.disposal_date, '%%Y-%%m') AS month, "
+            "SUM(COALESCE(wm.carbon_emission, 0)) AS total_emission "
+            "FROM construction_sites cs "
+            "JOIN waste_management wm ON cs.site_id = wm.site_id "
+            "WHERE cs.address LIKE %s "
+            "GROUP BY cs.site_name, month "
+            "ORDER BY cs.site_name, month"
+        )
+        cursor.execute(sql, (f"%{region_keyword}%",))
+        result = cursor.fetchall()
+        print(result)
+
+        for row in result:
+            row['total_emission'] = float(row['total_emission'])
+
+        conn.close()
+        return result
+
+
+def get_top_waste_types_by_region(region_keyword: str):
+    region_keyword = region_keyword.replace("광역시", "").replace("특별시", "").replace("도", "").strip()
+
+    conn = get_connection()
+    with conn.cursor() as cursor:
+        sql = """
+            SELECT
+                wm.waste_type,
+                SUM(wm.waste_amount) AS total_amount
+            FROM
+                construction_sites cs
+            JOIN
+                waste_management wm ON cs.site_id = wm.site_id
+            WHERE
+                cs.address LIKE %s
+            GROUP BY
+                wm.waste_type
+            ORDER BY
+                total_amount DESC
+            LIMIT 10
+        """
+        cursor.execute(sql, (f"%{region_keyword}%",))
+        result = cursor.fetchall()
+        # Decimal → float 변환
+        for row in result:
+            row['total_amount'] = float(row['total_amount'])
+    conn.close()
+    return result
