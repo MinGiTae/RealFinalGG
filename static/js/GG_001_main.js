@@ -228,10 +228,14 @@ window.addEventListener('scroll', function () {
 window.addEventListener('DOMContentLoaded', () => {
   const images = [];
   const totalImages = 5;
-  const startDelay = 500; // 첫 이미지 딜레이
-  const delayStep = 500; // 각 이미지 간의 딜레이 간격
-  const triggerOffset = 1500; // 스크롤 트리거 위치
+  const startDelay = 500;
+  const delayStep = 500;
+  const triggerOffset = 1500;
 
+  let hasAnimated = false;
+  let isAnimating = false;
+
+  // 이미지 요소들을 배열에 담기
   for (let i = 1; i <= totalImages; i++) {
     const id = i === 1 ? 'AnimationImage' : `AnimationImage${i}`;
     const el = document.getElementById(id);
@@ -244,17 +248,29 @@ window.addEventListener('DOMContentLoaded', () => {
   function triggerAnimation() {
     const shouldShow = window.scrollY >= triggerOffset;
 
-    images.forEach((img, index) => {
-      setTimeout(() => {
-        if (shouldShow) {
+    if (shouldShow && !hasAnimated && !isAnimating) {
+      isAnimating = true;
+
+      images.forEach((img, index) => {
+        setTimeout(() => {
           img.classList.remove('hidden');
           img.classList.add('show');
-        } else {
-          img.classList.remove('show');
-          img.classList.add('hidden');
-        }
-      }, startDelay + index * delayStep);
-    });
+          if (index === images.length - 1) {
+            hasAnimated = true;
+            isAnimating = false;
+          }
+        }, startDelay + index * delayStep);
+      });
+
+    } else if (!shouldShow && hasAnimated && !isAnimating) {
+      // 한 번에 사라지게끔 수정
+      images.forEach((img) => {
+        img.classList.remove('show');
+        img.classList.add('hidden');
+      });
+      hasAnimated = false;
+      isAnimating = false;
+    }
   }
 
   window.addEventListener('scroll', triggerAnimation);
@@ -272,35 +288,38 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
 
+const images = [
+  document.getElementById('AnimationImage6'),
+  document.getElementById('AnimationImage7'),
+  document.getElementById('AnimationImage8'),
+  document.getElementById('AnimationImage9')
+];
+
+let hasAnimated = false;
+let isAnimating = false;
+
 window.addEventListener('scroll', function () {
   const scrollPosition = window.scrollY || document.documentElement.scrollTop;
-  const images = [
-    document.getElementById('AnimationImage6'),
-    document.getElementById('AnimationImage7'),
-    document.getElementById('AnimationImage8'),
-    document.getElementById('AnimationImage9')
-  ];
 
-  if (scrollPosition > 1500) {
-    // 애니메이션이 아직 실행되지 않았으면 실행
-    if (!window.imagesAnimated) {
-      window.imagesAnimated = true;
+  if (scrollPosition > 1500 && !hasAnimated && !isAnimating) {
+    isAnimating = true;
 
-      setTimeout(() => {
-        images.forEach((img, index) => {
-          setTimeout(() => {
-            img.classList.add('show');
-          }, index * 150);
-        });
-      }, 3000); // 전체 등장 딜레이
-    }
-  } else {
-    // 다시 스크롤이 올라가면 숨기기
-    if (window.imagesAnimated) {
-      images.forEach((img) => {
-        img.classList.remove('show');
+    setTimeout(() => {
+      images.forEach((img, index) => {
+        setTimeout(() => {
+          img.classList.add('show');
+          if (index === images.length - 1) {
+            hasAnimated = true;
+            isAnimating = false;
+          }
+        }, index * 150);
       });
-      window.imagesAnimated = false;
-    }
+    }, 3000); // 전체 등장 딜레이
+  }
+
+  // 위로 올라가면 다시 숨기되, 애니메이션은 다시 실행되지 않게
+  if (scrollPosition <= 1500 && hasAnimated) {
+    images.forEach((img) => img.classList.remove('show'));
+    hasAnimated = false; // 원하면 true로 유지해서 재실행 막을 수 있음
   }
 });
