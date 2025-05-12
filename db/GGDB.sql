@@ -16,6 +16,66 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
+-- Table structure for table `audit_results`
+--
+
+DROP TABLE IF EXISTS `audit_results`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `audit_results` (
+  `result_id` int NOT NULL AUTO_INCREMENT,
+  `session_id` int NOT NULL,
+  `item_type` enum('ISO','LAW') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `item_index` tinyint NOT NULL,
+  `is_pass` tinyint(1) NOT NULL,
+  `comment` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT '',
+  `checked_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`result_id`),
+  KEY `audit_results_ibfk_1` (`session_id`),
+  CONSTRAINT `audit_results_ibfk_1` FOREIGN KEY (`session_id`) REFERENCES `audit_sessions` (`session_id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=1346 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `audit_results`
+--
+
+LOCK TABLES `audit_results` WRITE;
+/*!40000 ALTER TABLE `audit_results` DISABLE KEYS */;
+/*!40000 ALTER TABLE `audit_results` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `audit_sessions`
+--
+
+DROP TABLE IF EXISTS `audit_sessions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `audit_sessions` (
+  `session_id` int NOT NULL AUTO_INCREMENT,
+  `site_id` int NOT NULL,
+  `company_id` int NOT NULL,
+  `performed_by` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `performed_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`session_id`),
+  KEY `company_id` (`company_id`),
+  KEY `audit_sessions_ibfk_1` (`site_id`),
+  CONSTRAINT `audit_sessions_ibfk_1` FOREIGN KEY (`site_id`) REFERENCES `construction_sites` (`site_id`) ON DELETE CASCADE,
+  CONSTRAINT `audit_sessions_ibfk_2` FOREIGN KEY (`company_id`) REFERENCES `companies` (`company_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=106 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `audit_sessions`
+--
+
+LOCK TABLES `audit_sessions` WRITE;
+/*!40000 ALTER TABLE `audit_sessions` DISABLE KEYS */;
+/*!40000 ALTER TABLE `audit_sessions` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `companies`
 --
 
@@ -29,7 +89,7 @@ CREATE TABLE `companies` (
   `ceo_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `contact` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`company_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -38,7 +98,6 @@ CREATE TABLE `companies` (
 
 LOCK TABLES `companies` WRITE;
 /*!40000 ALTER TABLE `companies` DISABLE KEYS */;
-INSERT INTO `companies` VALUES (13,'테스트회사1','테스트동','김테스트','테스트테론'),(14,'테스트회사2','둔산동','이테스트','123123123');
 /*!40000 ALTER TABLE `companies` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -84,10 +143,19 @@ CREATE TABLE `construction_sites` (
   `company_id` int DEFAULT NULL,
   `latitude` double DEFAULT NULL,
   `longitude` double DEFAULT NULL,
+  `department` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `importance_level` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `contractor_notes` text COLLATE utf8mb4_unicode_ci,
+  `calibration_date` date DEFAULT NULL,
+  `survey_file_path` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `procedure_file_path` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `standard_file_path` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `monitoring_data_path` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `calibration_file_path` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`site_id`),
   KEY `construction_sites_ibfk_1` (`company_id`),
   CONSTRAINT `construction_sites_ibfk_1` FOREIGN KEY (`company_id`) REFERENCES `companies` (`company_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=41 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -96,8 +164,30 @@ CREATE TABLE `construction_sites` (
 
 LOCK TABLES `construction_sites` WRITE;
 /*!40000 ALTER TABLE `construction_sites` DISABLE KEYS */;
-INSERT INTO `construction_sites` VALUES (23,'쿠키앤크리무','대전 서구 둔산동 1205','스키짱',13,36.34980136748117,127.38157825805702),(24,'집지음','대전 서구 둔산동 1249','김집',14,36.34722978139802,127.38259058133545);
 /*!40000 ALTER TABLE `construction_sites` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `departments`
+--
+
+DROP TABLE IF EXISTS `departments`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `departments` (
+  `dept_id` int NOT NULL AUTO_INCREMENT,
+  `dept_name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`dept_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `departments`
+--
+
+LOCK TABLES `departments` WRITE;
+/*!40000 ALTER TABLE `departments` DISABLE KEYS */;
+/*!40000 ALTER TABLE `departments` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -226,7 +316,7 @@ CREATE TABLE `waste_management` (
   PRIMARY KEY (`waste_id`),
   KEY `waste_management_ibfk_1` (`site_id`),
   CONSTRAINT `waste_management_ibfk_1` FOREIGN KEY (`site_id`) REFERENCES `construction_sites` (`site_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=45 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -235,7 +325,6 @@ CREATE TABLE `waste_management` (
 
 LOCK TABLES `waste_management` WRITE;
 /*!40000 ALTER TABLE `waste_management` DISABLE KEYS */;
-INSERT INTO `waste_management` VALUES (27,23,'잡자재',31.00,3764.70,NULL,'2025-07-03','혼합건설폐기물','17-09-04',0),(28,23,'벽돌',10.00,345.00,NULL,'2025-08-13','폐벽돌','17-01-02',1),(29,24,'잡자재',31.00,3764.70,NULL,'2025-05-08','혼합건설폐기물','17-09-04',0);
 /*!40000 ALTER TABLE `waste_management` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -280,7 +369,7 @@ CREATE TABLE `waste_photo_objects` (
   KEY `object_id` (`object_id`),
   CONSTRAINT `waste_photo_objects_ibfk_1` FOREIGN KEY (`photo_id`) REFERENCES `waste_photos` (`photo_id`),
   CONSTRAINT `waste_photo_objects_ibfk_2` FOREIGN KEY (`object_id`) REFERENCES `waste_objects` (`object_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=92 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=136 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -289,7 +378,7 @@ CREATE TABLE `waste_photo_objects` (
 
 LOCK TABLES `waste_photo_objects` WRITE;
 /*!40000 ALTER TABLE `waste_photo_objects` DISABLE KEYS */;
-INSERT INTO `waste_photo_objects` VALUES (72,NULL,9,10),(73,NULL,14,2),(74,NULL,11,1),(75,NULL,8,31),(76,NULL,9,16),(77,NULL,2,5),(78,NULL,10,2),(79,NULL,11,2),(80,NULL,12,1),(81,NULL,13,1),(82,NULL,9,10),(83,NULL,14,2),(84,NULL,11,1),(85,NULL,8,31),(86,NULL,9,16),(87,NULL,2,5),(88,NULL,10,2),(89,NULL,11,2),(90,NULL,12,1),(91,NULL,13,1);
+INSERT INTO `waste_photo_objects` VALUES (72,NULL,9,10),(73,NULL,14,2),(74,NULL,11,1),(75,NULL,8,31),(76,NULL,9,16),(77,NULL,2,5),(78,NULL,10,2),(79,NULL,11,2),(80,NULL,12,1),(81,NULL,13,1),(82,NULL,9,10),(83,NULL,14,2),(84,NULL,11,1),(85,NULL,8,31),(86,NULL,9,16),(87,NULL,2,5),(88,NULL,10,2),(89,NULL,11,2),(90,NULL,12,1),(91,NULL,13,1),(92,NULL,10,2),(93,NULL,2,5),(94,NULL,9,10),(95,NULL,14,2),(96,NULL,11,1),(97,NULL,9,10),(98,NULL,14,2),(99,NULL,11,1),(100,NULL,2,15),(101,NULL,10,3),(102,NULL,2,15),(103,NULL,10,3),(104,NULL,9,10),(105,NULL,14,2),(106,NULL,11,1),(107,NULL,2,15),(108,NULL,10,3),(109,NULL,2,15),(110,NULL,10,3),(111,NULL,8,31),(112,NULL,9,16),(113,NULL,2,5),(114,NULL,10,2),(115,NULL,11,2),(116,NULL,12,1),(117,NULL,13,1),(118,NULL,9,10),(119,NULL,14,2),(120,NULL,11,1),(121,NULL,9,10),(122,NULL,14,2),(123,NULL,11,1),(124,NULL,8,31),(125,NULL,9,16),(126,NULL,2,5),(127,NULL,10,2),(128,NULL,11,2),(129,NULL,12,1),(130,NULL,13,1),(131,NULL,9,10),(132,NULL,14,2),(133,NULL,11,1),(134,NULL,2,15),(135,NULL,10,3);
 /*!40000 ALTER TABLE `waste_photo_objects` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -314,7 +403,7 @@ CREATE TABLE `waste_photos` (
   KEY `waste_photos_ibfk_1` (`site_id`),
   CONSTRAINT `waste_photos_ibfk_1` FOREIGN KEY (`site_id`) REFERENCES `construction_sites` (`site_id`) ON DELETE CASCADE,
   CONSTRAINT `waste_photos_ibfk_2` FOREIGN KEY (`object_id`) REFERENCES `waste_objects` (`object_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=52 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=67 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -323,7 +412,6 @@ CREATE TABLE `waste_photos` (
 
 LOCK TABLES `waste_photos` WRITE;
 /*!40000 ALTER TABLE `waste_photos` DISABLE KEYS */;
-INSERT INTO `waste_photos` VALUES (47,23,8,'2025-05-08 00:00:00','쿠키앤크리무_2025-05-08.jpg','잡자재 31개, 벽돌 16개, 플라스틱 5개, 파이프 2개, 타일 2개, 콘크리트 1개, 스티로폼 1개',1),(48,23,9,'2025-06-19 00:00:00','쿠키앤크리무_2025-06-19.jpg','벽돌 10개, 목재 2개, 타일 1개',1),(49,23,8,'2025-07-03 00:00:00','쿠키앤크리무_2025-07-03.jpg','잡자재 31개, 벽돌 16개, 플라스틱 5개, 파이프 2개, 타일 2개, 콘크리트 1개, 스티로폼 1개',1),(50,23,9,'2025-08-13 00:00:00','쿠키앤크리무_2025-08-13.jpg','벽돌 10개, 목재 2개, 타일 1개',1),(51,24,8,'2025-05-08 00:00:00','집지음_2025-05-08.jpg','잡자재 31개, 벽돌 16개, 플라스틱 5개, 파이프 2개, 타일 2개, 콘크리트 1개, 스티로폼 1개',1);
 /*!40000 ALTER TABLE `waste_photos` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -336,4 +424,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-05-08 16:04:56
+-- Dump completed on 2025-05-12 15:46:28
