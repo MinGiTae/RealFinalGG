@@ -21,56 +21,94 @@
 
 <div class="flex-wrapper">
   <!-- 지도 영역 -->
-  <div id="map" style="width:1200px; height:800px;">
-    <!-- 검색창 복원 -->
+  <div id="map">
     <input id="search-input4" placeholder="현장명 검색" />
     <button type="button" id="Button5">현장으로 이동</button>
     <div id="autocomplete-results"></div>
+  </div>
 
-    <!-- 리모컨 패널 -->
-    <div class="container" id="controlPanel">
-      <button type="button" class="toggle-button">≡</button>
-      <form id="siteForm" method="POST" action="/csr/register_site">
-        <div class="title-container">
-          <h1>건설 현장 등록·수정·삭제</h1>
-        </div>
-        <div id="search-box">
-          <label for="search-input1">현장명</label>
-          <input type="text" id="search-input1" name="site_name" placeholder="건설현장 이름" required>
+  <!-- 컨트롤 패널 -->
+  <div id="controlPanel">
+    <form id="siteForm" method="POST" action="/csr/register_site" enctype="multipart/form-data">
+      <h1>건설 현장 등록·수정·삭제</h1>
 
-          <label for="search-input2">주소</label>
-          <input type="text" id="search-input2" name="address" placeholder="건설현장 주소" required>
+      <!-- 회사 선택 -->
+      <label for="companySelect">회사 선택</label>
+      <select id="companySelect" name="company_id" required>
+        <option value="" disabled selected>회사를 선택하세요</option>
+        {% for company in companies %}
+          <option value="{{ company.company_id }}">{{ company.company_name }}</option>
+        {% endfor %}
+      </select>
 
-          <label for="search-input3">담당자명</label>
-          <input type="text" id="search-input3" name="manager_name" placeholder="담당자명" required>
+      <!-- 기본 정보 -->
+      <label for="search-input1">현장명</label>
+      <input type="text" id="search-input1" name="site_name" placeholder="건설현장 이름" required>
 
-          <input type="hidden" id="site_id" name="site_id">
-          <input type="hidden" id="latitude" name="latitude">
-          <input type="hidden" id="longitude" name="longitude">
+      <label for="search-input2">주소</label>
+      <input type="text" id="search-input2" name="address" placeholder="건설현장 주소" required>
 
-          <label for="companySelect">회사 선택</label>
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <select id="companySelect" name="company_id">
-              {% for company in companies %}
-                <option value="{{ company.company_id }}">{{ company.company_name }}</option>
-              {% endfor %}
-            </select>
-            <button type="button" id="openCompanyModal">+</button>
-            <button type="button" id="deleteCompany">−</button>
-          </div>
-        </div>
-        <div class="button-group">
-          <button type="submit" id="Button1">Create</button>
-          <button type="button" id="ButtonUpdate">Update</button>
-          <button type="button" id="ButtonDelete">Delete</button>
-        </div>
-      </form>
-    </div>
+      <label for="search-input3">담당자명</label>
+      <input type="text" id="search-input3" name="manager_name" placeholder="담당자명" required>
+
+      <!-- 부서 선택 -->
+      <label for="departmentSelect">주관 부서</label>
+      <input list="departmentList" id="departmentSelect" name="department" placeholder="부서를 선택하거나 입력하세요" required>
+      <datalist id="departmentList">
+        {% for dept in departments %}
+          <option value="{{ dept.name }}"></option>
+        {% endfor %}
+      </datalist>
+
+      <!-- 추가 입력 -->
+      <label for="survey_file">영향조사표/등록부 파일 업로드</label>
+      <input type="file" id="survey_file" name="survey_file">
+
+      <label for="importanceLevel">중요도 평가</label>
+      <select id="importanceLevel" name="importance_level">
+        <option value="">선택하세요</option>
+        <option value="high">High</option>
+        <option value="medium">Medium</option>
+        <option value="low">Low</option>
+      </select>
+
+      <label for="procedure_file">절차 문서 업로드</label>
+      <input type="file" id="procedure_file" name="procedure_file">
+
+      <label for="contractor_notes">계약자 소통 메모</label>
+      <textarea id="contractor_notes" name="contractor_notes" placeholder="계약자 요청사항 내용을 입력하세요"></textarea>
+
+      <label for="standard_file">운영 기준 문서 업로드</label>
+      <input type="file" id="standard_file" name="standard_file">
+
+      <label for="monitoring_data">모니터링 데이터 (CSV)</label>
+      <input type="file" id="monitoring_data" name="monitoring_data">
+
+      <label for="calibration_date">교정일자</label>
+      <input type="date" id="calibration_date" name="calibration_date">
+
+      <label for="calibration_file">교정 증명서 업로드</label>
+      <input type="file" id="calibration_file" name="calibration_file">
+
+      <input type="hidden" id="site_id" name="site_id">
+      <input type="hidden" id="latitude" name="latitude">
+      <input type="hidden" id="longitude" name="longitude">
+
+      <!-- 액션 버튼 -->
+      <div class="button-group">
+        <!-- Create: 일반 제출 -->
+        <button type="submit" id="Button1">Create</button>
+        <!-- Update & Delete: JS 핸들링 -->
+        <button type="button" id="ButtonUpdate">Update</button>
+        <button type="button" id="ButtonDelete">Delete</button>
+        <button type="button" id="openCompanyModal">회사등록</button>
+      </div>
+    </form>
   </div>
 </div>
 
 <!-- 회사 등록 모달 -->
-<div id="companyModal" class="modal">
+<div id="companyModal">
   <form method="POST" action="/csr/register_company">
     <h2>회사 등록</h2>
     <input type="text" name="company_name" placeholder="회사명" required>
@@ -84,7 +122,7 @@
   </form>
 </div>
 
-<!-- Kakao Maps SDK -->
+<!-- Kakao Maps SDK & JS -->
 <script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=30b3dfc1e244b48dfa1c16cec788c438&libraries=services"></script>
 <script src="/static/js/GG_003_csr.js"></script>
 

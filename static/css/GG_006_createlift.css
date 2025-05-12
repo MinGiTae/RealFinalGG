@@ -76,19 +76,28 @@
 .status-circle {
   width: 24px;
   height: 24px;
-  border: 2px solid #212121;
+  border: 2px solid #333;
   border-radius: 50%;
-  background: gray;
-  transition: background 0.3s, box-shadow 0.3s;
+  background: #999;
+  transition: background 0.3s, box-shadow 0.3s, transform 0.2s;
 }
+
 .status-circle.checked {
-  background: #00c300;
-  box-shadow: 0 0 6px #00c300;
+  background: #3cd070; /* 은은한 연두색 */
+  border-color: #2fb75e;
+  box-shadow: 0 0 4px rgba(60, 208, 112, 0.6);
 }
+
 .status-circle.unchecked {
-  background: #ff3b3b;
-  box-shadow: 0 0 6px #ff3b3b;
+  background: #ff5c5c; /* 부드러운 빨강 */
+  border-color: #cc4444;
+  box-shadow: 0 0 3px rgba(255, 92, 92, 0.5);
 }
+
+.status-circle:hover {
+  transform: scale(1.08);
+}
+
 #arrow {
   position: absolute;
   width: 30px;

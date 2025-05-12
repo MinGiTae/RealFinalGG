@@ -2,12 +2,14 @@ import os
 import pymysql
 import pymysql.cursors
 from datetime import datetime
-
+from werkzeug.utils import secure_filename
 # for Excel download
 import pandas as pd
 import openpyxl
 from flask import current_app, send_file
 from io import BytesIO
+from services.analyze_environmental import analyze_environmental_aspects
+
 
 # ===================== 공통 DB 연결 =====================
 def get_connection():
@@ -80,37 +82,180 @@ def get_sites_by_company(company_name):
     conn.close()
     return [row['site_name'] for row in rows]
 
-# ===================== Construction Site 관련 =====================
-# ✅ 건설 현장 등록
-def upload_construction_site(site_name, address, manager_name, latitude=None, longitude=None, company_id=None):
+def get_all_departments():
+    """
+    부서 목록을 조회해서 [{'id': ..., 'name': ...}, …] 형태로 반환합니다.
+    사전 테이블 departments(dept_id, dept_name)가 필요합니다.
+    """
     conn = get_connection()
     with conn.cursor() as cursor:
+        cursor.execute("""
+            SELECT dept_id AS id,
+                   dept_name AS name
+              FROM departments
+             ORDER BY name
+        """)
+        rows = cursor.fetchall()
+    conn.close()
+    return rows
+
+
+# ===================== Construction Site 관련 =====================
+# ✅ 건설 현장 등록
+def upload_construction_site(
+    site_name, address, manager_name,
+    latitude=None, longitude=None, company_id=None,
+    department=None, importance_level=None,
+    contractor_notes=None, calibration_date=None,
+    survey_file=None, procedure_file=None,
+    standard_file=None, monitoring_data=None,
+    calibration_file=None
+):
+    conn = get_connection()
+    with conn.cursor() as cursor:
+        # 기본 필드 삽입 준비
         columns = ["site_name", "address", "manager_name"]
-        values = [site_name, address, manager_name]
-        if latitude is not None and longitude is not None and company_id is not None:
-            columns += ["latitude", "longitude", "company_id"]
-            values += [latitude, longitude, company_id]
+        values  = [site_name, address, manager_name]
+
+        # 추가 필드
+        columns += [
+            "company_id", "department",
+            "importance_level", "contractor_notes",
+            "calibration_date"
+        ]
+        values += [
+            company_id, department,
+            importance_level, contractor_notes,
+            calibration_date
+        ]
+
+        # 좌표 있을 경우
+        if latitude is not None and longitude is not None:
+            columns += ["latitude", "longitude"]
+            values += [latitude, longitude]
+
+        # INSERT 실행
         placeholders = ", ".join(["%s"] * len(columns))
         sql = f"INSERT INTO construction_sites ({', '.join(columns)}) VALUES ({placeholders})"
         cursor.execute(sql, tuple(values))
+        new_id = cursor.lastrowid
+
+        # ✅ UPLOAD_DIR 설정 확인
+        upload_dir = current_app.config.get("UPLOAD_DIR")
+        if not upload_dir:
+            raise ValueError("UPLOAD_DIR 설정이 없습니다.")
+
+        # ✅ 파일 업로드 처리
+        for field_name, file_obj in [
+            ("survey_file_path", survey_file),
+            ("procedure_file_path", procedure_file),
+            ("standard_file_path", standard_file),
+            ("monitoring_data_path", monitoring_data),
+            ("calibration_file_path", calibration_file)
+        ]:
+            if file_obj and file_obj.filename:
+                filename = secure_filename(file_obj.filename)
+                save_path = os.path.join(upload_dir, filename)
+                file_obj.save(save_path)
+
+                cursor.execute(
+                    f"UPDATE construction_sites SET {field_name}=%s WHERE site_id=%s",
+                    (save_path, new_id)
+                )
+
         conn.commit()
     conn.close()
 
-# ✅ 건설 현장 수정
-def update_construction_site(site_id, site_name, address, manager_name, latitude=None, longitude=None, company_id=None):
+def get_site_info(company_name: str, site_name: str) -> dict:
     conn = get_connection()
     with conn.cursor() as cursor:
+        sql = """
+            SELECT cs.department, cs.importance_level, cs.contractor_notes, cs.calibration_date
+            FROM construction_sites cs
+            JOIN companies c ON cs.company_id = c.company_id
+            WHERE c.company_name = %s AND cs.site_name = %s
+            LIMIT 1
+        """
+        cursor.execute(sql, (company_name, site_name))
+        result = cursor.fetchone()
+    conn.close()
+
+    if result:
+        return {
+            'department': result.get('department'),
+            'importance_level': result.get('importance_level'),
+            'contractor_notes': result.get('contractor_notes'),
+            'calibration_date': str(result.get('calibration_date')) if result.get('calibration_date') else None
+        }
+    else:
+        return {
+            'department': '',
+            'importance_level': '',
+            'contractor_notes': '',
+            'calibration_date': None
+        }
+
+# ✅ 건설 현장 수정
+def update_construction_site(
+    site_id, site_name, address, manager_name,
+    latitude=None, longitude=None, company_id=None,
+    department=None, importance_level=None,
+    contractor_notes=None, calibration_date=None,
+    survey_file=None, procedure_file=None,
+    standard_file=None, monitoring_data=None,
+    calibration_file=None
+):
+    conn = get_connection()
+    with conn.cursor() as cursor:
+        # 기본 필드 업데이트 준비
         updates = ["site_name=%s", "address=%s", "manager_name=%s"]
-        values = [site_name, address, manager_name]
+        values  = [site_name, address, manager_name]
+
+        # 추가 필드들
+        updates += [
+            "company_id=%s", "department=%s",
+            "importance_level=%s", "contractor_notes=%s",
+            "calibration_date=%s"
+        ]
+        values += [
+            company_id, department,
+            importance_level, contractor_notes,
+            calibration_date
+        ]
+
+        # 좌표 있을 경우 추가
         if latitude is not None and longitude is not None:
             updates += ["latitude=%s", "longitude=%s"]
             values += [latitude, longitude]
-        if company_id is not None:
-            updates += ["company_id=%s"]
-            values += [company_id]
+
+        # 최종 UPDATE 쿼리 실행
         sql = f"UPDATE construction_sites SET {', '.join(updates)} WHERE site_id=%s"
         values.append(site_id)
         cursor.execute(sql, tuple(values))
+
+        # ✅ 파일 업로드 디렉토리 설정 확인
+        upload_dir = current_app.config.get("UPLOAD_DIR")
+        if not upload_dir:
+            raise ValueError("UPLOAD_DIR 설정이 없습니다.")
+
+        # ✅ 파일 업로드 및 경로 업데이트
+        for field_name, file_obj in [
+            ("survey_file_path", survey_file),
+            ("procedure_file_path", procedure_file),
+            ("standard_file_path", standard_file),
+            ("monitoring_data_path", monitoring_data),
+            ("calibration_file_path", calibration_file)
+        ]:
+            if file_obj and file_obj.filename:
+                filename = secure_filename(file_obj.filename)
+                save_path = os.path.join(upload_dir, filename)
+                file_obj.save(save_path)
+
+                cursor.execute(
+                    f"UPDATE construction_sites SET {field_name}=%s WHERE site_id=%s",
+                    (save_path, site_id)
+                )
+
         conn.commit()
     conn.close()
 
@@ -126,13 +271,23 @@ def delete_construction_site(site_id):
 def get_all_construction_sites():
     conn = get_connection()
     with conn.cursor() as cursor:
-        cursor.execute(
-            "SELECT site_id, site_name, address, manager_name, latitude, longitude, company_id FROM construction_sites"
-        )
+        cursor.execute("""
+            SELECT site_id,
+                   site_name,
+                   address,
+                   manager_name,
+                   latitude,
+                   longitude,
+                   company_id,
+                   department,
+                   importance_level AS importance_level,
+                   contractor_notes,
+                   DATE_FORMAT(calibration_date, '%%Y-%%m-%%d') AS calibration_date
+              FROM construction_sites
+        """)
         result = cursor.fetchall()
     conn.close()
     return result
-
 # alias for site list
 def get_all_sites():
     return get_all_construction_sites()
@@ -247,21 +402,22 @@ def get_monthly_stats(site_id=None):
         if site_id:
             cursor.execute(
                 """
-                    SELECT DATE_FORMAT(disposal_date,'%Y-%m') AS month,
-                           SUM(waste_amount) AS total_waste,
-                           SUM(carbon_emission) AS total_emission
+                    SELECT DATE_FORMAT(disposal_date,'%%Y-%%m') AS month,
+                           SUM(waste_amount)     AS total_waste,
+                           SUM(carbon_emission)  AS total_emission
                       FROM waste_management
                      WHERE site_id=%s
                      GROUP BY month
                      ORDER BY month
-                """, (site_id,)
+                """,
+                (site_id,)
             )
         else:
             cursor.execute(
                 """
-                    SELECT DATE_FORMAT(disposal_date,'%Y-%m') AS month,
-                           SUM(waste_amount) AS total_waste,
-                           SUM(carbon_emission) AS total_emission
+                    SELECT DATE_FORMAT(disposal_date,'%%Y-%%m') AS month,
+                           SUM(waste_amount)     AS total_waste,
+                           SUM(carbon_emission)  AS total_emission
                       FROM waste_management
                      GROUP BY month
                      ORDER BY month
@@ -270,6 +426,7 @@ def get_monthly_stats(site_id=None):
         rows = cursor.fetchall()
     conn.close()
     return rows
+
 
 # ✅ 폐기물 관리 저장
 def insert_waste_management(site_id, waste_type, waste_amount, carbon_emission, disposal_date):
@@ -481,37 +638,6 @@ def get_images_for_site(company_name: str, site_name: str) -> list:
         return []
     return get_photos_by_site(site_id)
 
-
-def analyze_environmental_aspects(images: list) -> list:
-    results = []
-
-    # EMP-301 (1~5)
-    results.append(len(images) > 0)  # 1
-    results.append(any(img.get('detection_summary') for img in images))  # 2
-    results.append(len(images) > 5)  # 3
-    results.append(True)  # 4
-    results.append(len(images) > 0)  # 5
-
-    # EMP-408 (6~8)
-    results.append(any('폐기물' in img.get('detection_summary', '') for img in images))  # 6
-    results.append(True)  # 외주업체 요구사항 전달 여부는 DB에서 따로 가능함 (예시로 True)
-    results.append(True)  # 운영 기준 명시는 시스템 기준 정의 시 True
-
-    # EMP-501 (9~12)
-    results.append(len(images) >= 3)  # 주요 환경특성 파악 여부
-    results.append(True)  # 측정 주기 (업로드 주기 비교 기반 가능, 예시 True)
-    results.append(True)  # 법적 기준 만족 여부는 수치가 없어서 예시 True
-    results.append(any('장비' in img.get('detection_summary', '') for img in images))  # 교정/검증 기록
-
-    # EMP-504 (13~16)
-    results.append(True)  # 기록 존재 여부
-    results.append(True)  # 절차 유무 (시스템 정의 기반)
-    results.append(True)  # 추적 가능 여부
-    results.append(True)  # 시스템 준수 여부 (조건부 True)
-
-    return results  # 총 16개
-
-
 def analyze_waste_requirements(images: list) -> list:
     # 현재 사용 안 함
     return []
@@ -544,31 +670,22 @@ def insert_audit_result(session_id: int, item_type: str, item_index: int, is_pas
         conn.commit()
     conn.close()
 
-
 def create_audit_report_excel(company_name: str, site_name: str) -> BytesIO:
-    from io import BytesIO
-    from datetime import datetime
-    import os
-    import openpyxl
-    from flask import current_app
-    from db.db_manager import get_images_for_site
-    from services.analyze_environmental import analyze_environmental_aspects
-
     tpl_path = os.path.join(current_app.root_path, 'datasets', 'templates', '감사체크리스트.xlsx')
     wb = openpyxl.load_workbook(tpl_path)
     ws = wb.active
 
-    def safe_write(r, c, v):
-        from openpyxl.cell.cell import MergedCell
-        cell = ws.cell(row=r, column=c)
-        if isinstance(cell, MergedCell):
-            for rng in ws.merged_cells.ranges:
-                if rng.min_row <= r <= rng.max_row and rng.min_col <= c <= rng.max_col:
-                    ws.cell(rng.min_row, rng.min_col, v)
-                    return
-        ws.cell(r, c, v)
+    def safe_write(row, col, value):
+        # 병합된 셀 범위 체크
+        for rng in ws.merged_cells.ranges:
+            if rng.min_row <= row <= rng.max_row and rng.min_col <= col <= rng.max_col:
+                ws.cell(rng.min_row, rng.min_col).value = value
+                return
+        # 병합 안된 셀은 그냥 씀
+        ws.cell(row=row, column=col).value = value
 
-    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    # 상단 기본값 세팅
+    now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     for rng in ws.merged_cells.ranges:
         val = str(ws.cell(rng.min_row, rng.min_col).value or '')
         if '피감사팀' in val:
@@ -576,78 +693,79 @@ def create_audit_report_excel(company_name: str, site_name: str) -> BytesIO:
         if '감사원' in val:
             safe_write(rng.min_row, rng.min_col, '시스템 자동감사')
         if '감사일자' in val:
-            safe_write(rng.min_row, rng.min_col, now)
+            safe_write(rng.min_row, rng.min_col, now_str)
 
-    # 🔥 이미지 분석 결과 (iso_checks + iso_reasons)
+    # 데이터 가져오기
     images = get_images_for_site(company_name, site_name)
-    iso_checks, iso_reasons = analyze_environmental_aspects(images)
+    site_info = get_site_info(company_name, site_name)
+    iso_checks, iso_reasons = analyze_environmental_aspects(images, site_info)
 
     # 헤더 찾기
     header_row = None
     for row in ws.iter_rows(min_row=1, max_row=50):
         for cell in row:
-            if str(cell.value).strip() == "감사항목":
+            if str(cell.value).strip() == '감사항목':
                 header_row = cell.row
-                question_col = cell.column
                 break
         if header_row:
             break
     if not header_row:
-        raise RuntimeError("템플릿에서 '감사항목' 헤더를 찾을 수 없습니다.")
+        raise RuntimeError('엑셀 템플릿에서 헤더 정보를 찾을 수 없습니다.')
 
-    # 적합 / 부적합 열 찾기
+    # 적합/부적합 컬럼 찾기
     pass_col = fail_col = None
     for idx, cell in enumerate(ws[header_row], start=1):
-        txt = str(cell.value or '').replace(' ', '')
+        txt = str(cell.value or '').replace(' ', '').replace('\n', '').strip()
         if txt == '적합':
             pass_col = idx
         elif txt == '부적합':
             fail_col = idx
-    if not all([pass_col, fail_col]):
-        raise RuntimeError("헤더에 '적합', '부적합' 열이 필요합니다.")
+    if fail_col is None:
+        raise RuntimeError(f'엑셀 헤더 "부적합" 열을 찾을 수 없습니다. header_row={header_row}, pass_col={pass_col}, fail_col={fail_col}')
 
-    # ISO 문항 리스트
+    # 문항 리스트
     iso_questions = [
         '환경측면을 파악하기 위한 분야별 주관 부서는 설정되었는가?',
-        '환경측면/영향조사표 및 환경영향평가서, 환경영향등록부가 기록되고 기능별로 정리되어 있는가?',
+        '환경측면/영향조사표 및 환경영향등록부가 기록되고 기능별로 정리되어 있는가?',
         '환경측면과 관련된 환경영향은 누락 없이 파악되고 있는가?',
         '환경측면의 중요성에 대한 평가는 정해진 기준을 준수하는가?',
-        '중요한 환경영향과 관련된 환경측면에 대한 정보를 최신의 자료로 유지하고 있는가?',
+        '중요한 환경측면 정보를 최신 자료로 유지하고 있는가?',
         '중요한 환경측면과 관련된 활동 및 운영이 식별되고 관련절차가 수립되고 기록되고 있는가?',
         '외주업체와 계약자에게 관련된 요구사항을 전달하는 의사소통은 수립되어 있는가?',
         '절차에 운영기준은 명시되고 있는가?',
         '주요 환경특성을 파악하고 모니터링 하고 있는가?',
-        '환경 모니터링 및 측정은 계획된 주기로 실시하고 있는가?',
-        '주요 환경특성이 법적 기준을 만족하는가?',
-        '사용하고 있는 모니터링 및 측정 장비를 교정, 검증하며 관련기록을 유지하는가?',
-        '필요한 기록물을 작성 유지관리 하는가?',
-        '기록은 식별, 보관, 보호, 검색, 보유, 폐기에 대한 절차 및 유지관리 하는가?',
-        '기록은 읽기 쉽고 식별, 추적이 가능한가?',
-        '기록관리 시스템을 준수하고 있는가?'
+        '사용하고 있는 모니터링 및 측정 장비를 교정, 검증하며 관련기록을 유지하는가?'
     ]
 
-    # 문항별 적합/부적합 체크
+    # 체크표시 찍기
     for row in ws.iter_rows(min_row=header_row + 1, max_row=ws.max_row):
-        q_text = str(row[question_col].value or '').strip()
+        q_text = str(row[0].value or '').strip()
         if not q_text:
             continue
 
         for idx, standard_q in enumerate(iso_questions):
-            if q_text.replace(' ', '').replace('\n', '') in standard_q.replace(' ', ''):
+            if q_text.replace(' ', '').replace('\n', '') in standard_q.replace(' ', '').replace('\n', ''):
                 result = iso_checks[idx]
                 target_col = pass_col if result else fail_col
                 safe_write(row[0].row, target_col, '○')
                 break
 
-    # 🔥 부적합 사유 시트 생성
+    # 수동확인필요 시트
     manual_ws = wb.create_sheet('수동확인필요')
     manual_ws.append(['번호', '감사항목', '판정', '판단사유'])
     for idx, (q, passed, reason) in enumerate(zip(iso_questions, iso_checks, iso_reasons), start=1):
         if not passed:
             manual_ws.append([idx, q, '부적합', reason])
 
-    # 파일 출력
     output = BytesIO()
     wb.save(output)
     output.seek(0)
     return output
+
+def get_all_waste_objects():
+    conn = get_connection()
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT object_name FROM waste_objects")
+        rows = cursor.fetchall()
+    conn.close()
+    return [row['object_name'] for row in rows]

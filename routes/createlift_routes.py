@@ -9,7 +9,7 @@ from db.db_manager import (
     insert_audit_result,
     create_audit_report_excel
 )
-from services.analyze_environmental import analyze_environmental_aspects  # ✅ 빠졌으면 추가
+from services.analyze_environmental import analyze_environmental_aspects  # ✅ 2개 인자 기준으로 이미 맞음
 
 createlift_bp = Blueprint('createlift', __name__)
 
@@ -38,20 +38,30 @@ def select_site():
     company_name = request.form['company_name']
     site_name = request.form['site_name']
 
-    # 1) 이미지 분석 및 자동 판단
-    images = get_images_for_site(company_name, site_name)
-    iso_checks, iso_reasons = analyze_environmental_aspects(images)  # ✅ results + reasons
-
-    # 2) DB 저장
+    # 1) 현장 정보 조회
     site_id = get_site_id_by_name(site_name)
     site_info = get_site_by_id(site_id)
+
+    print(f"📊 site_info: {site_info}")
+
+    # 2) 이미지 조회 및 분석
+    images = get_images_for_site(company_name, site_name)
+    print(f"🖼️ images: {images}")
+
+    # ✅ 2개 인자 넘기기 (images, site_info)
+    iso_checks, iso_reasons = analyze_environmental_aspects(images, site_info)
+
+    print(f"✅ iso_checks: {iso_checks}")
+    print(f"📝 iso_reasons: {iso_reasons}")
+
+    # 3) 감사 결과 DB 저장
     company_id = site_info['company_id']
     session_id = insert_audit_session(company_id, site_id, performed_by='system')
 
     for idx, passed in enumerate(iso_checks, start=1):
-        insert_audit_result(session_id, 'ISO', idx, passed, iso_reasons[idx-1])
+        insert_audit_result(session_id, 'ISO', idx, passed, iso_reasons[idx - 1])
 
-    # 3) 결과 리턴 (판정 + 사유)
+    # 4) 결과 반환
     return jsonify({
         "actual_results": iso_checks,
         "reasons": iso_reasons
@@ -65,7 +75,9 @@ def download_audit_excel():
     company_name = request.args.get('company_name')
     site_name = request.args.get('site_name')
 
+    # ✅ site_info는 create_audit_report_excel 내부에서 처리 (images 포함)
     buf = create_audit_report_excel(company_name, site_name)
+
     filename = f"{site_name.replace(' ', '_')}_내부감사결과.xlsx"
     return send_file(
         buf,

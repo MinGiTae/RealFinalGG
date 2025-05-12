@@ -1,93 +1,79 @@
-def analyze_environmental_aspects(images: list) -> list:
+from datetime import datetime
+from typing import List, Dict, Tuple
+
+def analyze_environmental_aspects(images: List[Dict], site_info: Dict) -> Tuple[List[bool], List[str]]:
     results = []
     reasons = []
 
-    # 사전 준비 (예시 기준)
-    detected_texts = [img.get('detection_summary', '').lower() for img in images]
-    material_keywords = ['concrete', 'wood', 'metal', 'plastic']
-    has_detection = any(detected_texts)
-    image_count = len(images)
+    # site_info 값들
+    department = site_info.get('department', '').strip()
+    importance = (site_info.get('importance_level') or '').strip().lower()
+    contractor_notes = site_info.get('contractor_notes', '').strip()
+    calibration_date = site_info.get('calibration_date')
 
-    # 1. 환경측면을 파악하기 위한 주관 부서 존재 여부
-    dept_info_exists = any('department' in img.get('metadata', {}).get('tags', []) for img in images)
-    results.append(dept_info_exists)
-    reasons.append('부서 정보가 존재합니다.' if dept_info_exists else '부서 정보가 누락되었습니다.')
-
-    # 2. 환경영향조사표 및 등록부 정리 여부
-    survey_exists = any('impact_survey' in img.get('metadata', {}).get('tags', []) for img in images)
-    results.append(survey_exists)
-    reasons.append('영향조사표 및 등록부가 확인되었습니다.' if survey_exists else '영향조사표 및 등록부가 확인되지 않았습니다.')
-
-    # 3. 환경영향 누락 여부 (detected object 기반)
-    critical_found = any(any(k in text for k in material_keywords) for text in detected_texts)
-    results.append(critical_found)
-    reasons.append('중요 자재가 인식되었습니다.' if critical_found else '중요 자재 인식이 없습니다.')
-
-    # 4. 중요성 평가 기준 준수 여부 (샘플: 파일명 패턴 기반)
-    importance_evaluated = any('priority' in img.get('filename', '').lower() for img in images)
-    results.append(importance_evaluated)
-    reasons.append('중요성 평가 관련 파일이 존재합니다.' if importance_evaluated else '중요성 평가 관련 자료가 없습니다.')
-
-    # 5. 최신 자료 유지 여부 (등록일자 기반 최신성 체크)
-    from datetime import datetime, timedelta
     now = datetime.now()
-    recent_exists = any((now - img.get('created_at', now)).days <= 30 for img in images)
-    results.append(recent_exists)
-    reasons.append('최근 30일 내 자료가 존재합니다.' if recent_exists else '최신 자료가 없습니다.')
 
-    # 6. 활동 식별 및 절차 수립 여부 (metadata.tags 기반)
-    activity_procedures = any('procedure' in img.get('metadata', {}).get('tags', []) for img in images)
-    results.append(activity_procedures)
-    reasons.append('활동 및 절차가 식별되었습니다.' if activity_procedures else '활동 및 절차 정보가 없습니다.')
+    # 이미지 데이터 전처리
+    texts = [img.get('detection_summary', '').lower() for img in images]
+    filenames = [img.get('image_filename', '').lower() for img in images]
+    uploaded_dates = [img.get('uploaded_at', now) for img in images]
 
-    # 7. 외주업체 및 계약자 요구사항 전달 여부 (contractor 태그)
-    contractor_comm = any('contractor' in img.get('metadata', {}).get('tags', []) for img in images)
-    results.append(contractor_comm)
-    reasons.append('계약자 요구사항 전달 내역이 확인됩니다.' if contractor_comm else '계약자 요구사항 전달 내역이 없습니다.')
+    # 주관 부서 체크
+    results.append(bool(department))
+    reasons.append('주관 부서가 설정되었습니다.' if department else '주관 부서가 누락되었습니다.')
 
-    # 8. 운영 기준 명시 여부 (standard 태그)
-    has_standards = any('standard' in img.get('metadata', {}).get('tags', []) for img in images)
-    results.append(has_standards)
-    reasons.append('운영 기준이 명시되어 있습니다.' if has_standards else '운영 기준이 누락되었습니다.')
+    # 영향조사표 / 등록부 체크
+    results.append(any('impact' in f or '등록부' in f for f in filenames))
+    reasons.append('영향조사표/등록부가 확인되었습니다.' if results[-1] else '영향조사표/등록부가 없습니다.')
 
-    # 9. 환경특성 모니터링 여부 (monitoring 태그)
-    monitoring_found = any('monitoring' in img.get('metadata', {}).get('tags', []) for img in images)
-    results.append(monitoring_found)
-    reasons.append('모니터링 데이터가 존재합니다.' if monitoring_found else '모니터링 데이터가 없습니다.')
+    # 중요 자재 체크
+    material_keywords = ['벽돌', '목재', '타일', '콘크리트', '금속', '플라스틱']
+    material_found = any(any(kw in text for kw in material_keywords) for text in texts)
+    results.append(material_found)
+    reasons.append('중요 자재가 인식되었습니다.' if material_found else '중요 자재 인식이 없습니다.')
 
-    # 10. 측정 장비 교정 및 검증 여부 (calibration 태그)
-    calibration_done = any('calibration' in img.get('metadata', {}).get('tags', []) for img in images)
-    results.append(calibration_done)
-    reasons.append('장비 교정 및 검증 이력이 있습니다.' if calibration_done else '장비 교정 및 검증 이력이 없습니다.')
+    # 중요성 평가 체크
+    priority_file_found = any('priority' in f for f in filenames) or importance in ['high', 'medium', 'low']
+    results.append(priority_file_found)
+    reasons.append('중요성 평가가 존재합니다.' if priority_file_found else '중요성 평가가 누락되었습니다.')
 
-    # 11. 법적 기준 만족 여부 (detection 기반)
-    compliant_detected = any('hazard' not in text for text in detected_texts)
-    results.append(compliant_detected)
-    reasons.append('법적 기준을 만족하는 항목이 확인됩니다.' if compliant_detected else '법적 기준을 위반하는 항목이 검출되었습니다.')
+    # 최근 30일 자료 체크
+    recent_data_found = any((now - up_date).days <= 30 for up_date in uploaded_dates)
+    results.append(recent_data_found)
+    reasons.append('최근 30일 내 자료가 존재합니다.' if recent_data_found else '최신 자료가 없습니다.')
 
-    # 12. 장비 이력 기록 여부 (equipment_log 태그)
-    equipment_logged = any('equipment_log' in img.get('metadata', {}).get('tags', []) for img in images)
-    results.append(equipment_logged)
-    reasons.append('장비 이력 기록이 확인됩니다.' if equipment_logged else '장비 이력 기록이 없습니다.')
+    # 절차 문서 체크
+    procedure_file_found = any('procedure' in f for f in filenames)
+    results.append(procedure_file_found)
+    reasons.append('절차 문서가 업로드되었습니다.' if procedure_file_found else '절차 문서가 없습니다.')
 
-    # 13. 기록물 작성 여부 (document 태그)
-    has_documents = any('document' in img.get('metadata', {}).get('tags', []) for img in images)
-    results.append(has_documents)
-    reasons.append('기록물이 작성되어 있습니다.' if has_documents else '기록물이 작성되지 않았습니다.')
+    # 계약자 메모 체크
+    contractor_found = bool(contractor_notes)
+    results.append(contractor_found)
+    reasons.append('계약자 메모가 작성되었습니다.' if contractor_found else '계약자 메모가 없습니다.')
 
-    # 14. 기록물 식별 및 관리 여부 (record_management 태그)
-    record_management = any('record_management' in img.get('metadata', {}).get('tags', []) for img in images)
-    results.append(record_management)
-    reasons.append('기록물 식별 및 관리 내역이 확인됩니다.' if record_management else '기록물 식별 및 관리 내역이 없습니다.')
+    # 운영 기준 문서 체크
+    standard_file_found = any('standard' in f for f in filenames)
+    results.append(standard_file_found)
+    reasons.append('운영 기준 문서가 있습니다.' if standard_file_found else '운영 기준 문서가 없습니다.')
 
-    # 15. 기록물 추적 가능 여부 (traceability 태그)
-    traceable = any('traceability' in img.get('metadata', {}).get('tags', []) for img in images)
-    results.append(traceable)
-    reasons.append('기록물의 추적이 가능합니다.' if traceable else '기록물 추적 내역이 없습니다.')
+    # 모니터링 데이터 체크
+    monitoring_file_found = any('monitoring' in f for f in filenames)
+    results.append(monitoring_file_found)
+    reasons.append('모니터링 데이터가 확인됩니다.' if monitoring_file_found else '모니터링 데이터가 없습니다.')
 
-    # 16. 시스템 준수 여부 (system_compliance 태그)
-    system_compliance = any('system_compliance' in img.get('metadata', {}).get('tags', []) for img in images)
-    results.append(system_compliance)
-    reasons.append('시스템 준수 기록이 확인됩니다.' if system_compliance else '시스템 준수 기록이 없습니다.')
+    # 교정일자 체크
+    calibration_valid = False
+    if calibration_date and str(calibration_date).lower() not in ['none', 'null', '']:
+        try:
+            if isinstance(calibration_date, datetime):
+                cal_date = calibration_date
+            else:
+                cal_date = datetime.strptime(calibration_date, '%Y-%m-%d')
+            calibration_valid = (now - cal_date).days <= 365
+        except Exception:
+            calibration_valid = False
+    results.append(calibration_valid)
+    reasons.append('교정일자가 유효합니다.' if calibration_valid else '교정일자가 없거나 오래되었습니다.')
 
     return results, reasons
