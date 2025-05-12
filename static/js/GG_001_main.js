@@ -149,14 +149,31 @@ window.addEventListener('scroll', function() {
 });
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 const scrollThreshold = 1600;
+
+
 
 window.addEventListener('scroll', function () {
   const scrollbutton1 = document.getElementById('Button3');
   if (window.scrollY > scrollThreshold) {
     scrollbutton1.style.opacity = '1';
     scrollbutton1.style.pointerEvents = 'auto';
-    scrollbutton1.style.display = 'block'; // 또는 flex 등 원래값
+    scrollbutton1.style.display = 'block';
   } else {
     scrollbutton1.style.opacity = '0';
     scrollbutton1.style.pointerEvents = 'none';

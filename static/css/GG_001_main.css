@@ -54,7 +54,7 @@ html, body{
 
 
 #crain {
-  height : 40vw;
+  height : 50vw;
   width : 30vw;
   position: fixed;
   left: 54vw;
@@ -192,9 +192,10 @@ html, body{
 
 #scrollImage {
   position: absolute;
-  height: 34vw;
+  height: 36vw;
   margin-top: 100vw;
   z-index: 9998;
+  left: 13.8%;
 }
 
 
@@ -241,6 +242,8 @@ html, body{
 }
 #Button1:hover {
     background-color: #E6B864;
+    transform: scale(1.05);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
 #Button1:active {
@@ -273,6 +276,8 @@ html, body{
 
 #Button2:hover {
     background-color: #E6B864;
+    transform: scale(1.05);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
 #Button2:active {
@@ -323,6 +328,8 @@ html, body{
   }
 #Button3:hover {
     background-color: #E6B864;
+    transform: scale(1.05);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
   }
 #Button3:active {
   transform: translateY(3px);
@@ -353,11 +360,15 @@ html, body{
 
 #Button4:hover {
     background-color: #E6B864;
+    transform: scale(1.05);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 #Button4:active {
   transform: translateY(3px);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
+
+
 
 
 
@@ -388,7 +399,7 @@ to {
 
 #AnimationImage {
   position: absolute;
-  margin-top: 105vw;
+  margin-top: 107vw;
   margin-left: 17vw;
   z-index: 9999;
   transition: opacity 1s ease, transform 1s ease;
@@ -396,7 +407,7 @@ to {
 
 #AnimationImage2 {
   position: absolute;
-  margin-top: 105vw;
+  margin-top: 107vw;
   margin-left: 29vw;
   z-index: 9999;
   transition: opacity 1s ease, transform 1s ease;
@@ -404,7 +415,7 @@ to {
 
 #AnimationImage3 {
   position: absolute;
-  margin-top: 105vw;
+  margin-top: 107vw;
   margin-left: 41vw;
   z-index: 9999;
   transition: opacity 1s ease, transform 1s ease;
@@ -412,7 +423,7 @@ to {
 
 #AnimationImage4 {
   position: absolute;
-  margin-top: 106vw;
+  margin-top: 108vw;
   margin-left: 53vw;
   z-index: 9999;
   transition: opacity 1s ease, transform 1s ease;
@@ -420,7 +431,7 @@ to {
 
 #AnimationImage5 {
   position: absolute;
-  margin-top: 117vw;
+  margin-top: 119vw;
   margin-left: 43vw;
   z-index: 9999;
   transition: opacity 1s ease, transform 1s ease;
@@ -428,7 +439,7 @@ to {
 
 #AnimationImage6 {
   position: absolute;
-  margin-top: 120vw;
+  margin-top: 122vw;
   margin-left: 32vw;
   z-index: 9999;
   transition: opacity 1s ease, transform 1s ease;
@@ -436,7 +447,7 @@ to {
 
 #AnimationImage7 {
   position: absolute;
-  margin-top: 120vw;
+  margin-top: 122vw;
   margin-left: 38vw;
   z-index: 9999;
   transition: opacity 1s ease, transform 1s ease;
@@ -444,7 +455,7 @@ to {
 
 #AnimationImage8 {
   position: absolute;
-  margin-top: 120vw;
+  margin-top: 122vw;
   margin-left: 48vw;
   z-index: 9999;
   transition: opacity 1s ease, transform 1s ease;
@@ -452,7 +463,7 @@ to {
 
 #AnimationImage9 {
   position: absolute;
-  margin-top: 120vw;
+  margin-top: 122vw;
   margin-left: 57vw;
   z-index: 9999;
   transition: opacity 1s ease, transform 1s ease;
