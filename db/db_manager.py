@@ -6,18 +6,15 @@ from datetime import datetime
 # for Excel download
 import pandas as pd
 import openpyxl
-from flask import current_app
-from io import BytesIO
-
-# Flask 관련
 from flask import current_app, send_file
+from io import BytesIO
 
 # ===================== 공통 DB 연결 =====================
 def get_connection():
     return pymysql.connect(
         host="localhost",
         user="root",
-        password="0731",
+        password="0731",  # ← 수정: DB 비밀번호 변경
         database="garbageguard",
         charset="utf8mb4",
         cursorclass=pymysql.cursors.DictCursor
@@ -250,7 +247,7 @@ def get_monthly_stats(site_id=None):
         if site_id:
             cursor.execute(
                 """
-                    SELECT DATE_FORMAT(disposal_date,'%%Y-%%m') AS month,
+                    SELECT DATE_FORMAT(disposal_date,'%Y-%m') AS month,
                            SUM(waste_amount) AS total_waste,
                            SUM(carbon_emission) AS total_emission
                       FROM waste_management
@@ -262,7 +259,7 @@ def get_monthly_stats(site_id=None):
         else:
             cursor.execute(
                 """
-                    SELECT DATE_FORMAT(disposal_date,'%%Y-%%m') AS month,
+                    SELECT DATE_FORMAT(disposal_date,'%Y-%m') AS month,
                            SUM(waste_amount) AS total_waste,
                            SUM(carbon_emission) AS total_emission
                       FROM waste_management
@@ -330,6 +327,153 @@ def insert_waste_management(
         ))
         conn.commit()
     conn.close()
+
+# ▶ 추가 함수 1: 폐기물 종류별 탄소 배출량
+def get_emissions_by_waste_type(site_id=None):
+    conn = get_connection()
+    with conn.cursor() as cursor:
+        if site_id:
+            sql = """
+                SELECT waste_type, SUM(carbon_emission) AS total_emission
+                FROM waste_management
+                WHERE site_id = %s
+                GROUP BY waste_type
+            """
+            cursor.execute(sql, (site_id,))
+        else:
+            cursor.execute("""
+                SELECT waste_type, SUM(carbon_emission) AS total_emission
+                FROM waste_management
+                GROUP BY waste_type
+            """)
+        result = cursor.fetchall()
+    conn.close()
+    return result
+
+# ▶ 추가 함수 2: 폐기물 종류별 배출량
+def get_waste_amount_by_type(site_id=None):
+    conn = get_connection()
+    with conn.cursor() as cursor:
+        if site_id:
+            sql = """
+                SELECT waste_type, SUM(waste_amount) AS total_amount
+                FROM waste_management
+                WHERE site_id = %s
+                GROUP BY waste_type
+            """
+            cursor.execute(sql, (site_id,))
+        else:
+            cursor.execute("""
+                SELECT waste_type, SUM(waste_amount) AS total_amount
+                FROM waste_management
+                GROUP BY waste_type
+            """)
+        result = cursor.fetchall()
+    conn.close()
+    return result
+
+# ▶ 추가 함수 3: 현재 월 폐기물 비율 (수정판)
+def get_waste_percentage_current_month():
+    conn = get_connection()
+    with conn.cursor() as cursor:
+        now = datetime.now()
+        current_month = now.strftime('%Y-%m')
+        sql = """
+            SELECT waste_type, SUM(waste_amount) AS total
+            FROM waste_management
+            WHERE DATE_FORMAT(disposal_date, '%%Y-%%m') = %s
+            GROUP BY waste_type
+        """
+        cursor.execute(sql, (current_month,))
+        rows = cursor.fetchall()
+        total = sum(row['total'] for row in rows)
+        if total == 0:
+            return []
+        return [
+            {"waste_type": row["waste_type"], "percentage": round((row["total"] / total) * 100)}
+            for row in rows
+        ]
+    conn.close()
+
+# ▶ 추가 함수 4: 건설사별 탄소 배출량
+def get_carbon_emission_by_company():
+    conn = get_connection()
+    with conn.cursor() as cursor:
+        sql = """
+            SELECT c.company_name, SUM(wm.carbon_emission) AS total_emission
+            FROM companies c
+            JOIN construction_sites cs ON c.company_id = cs.company_id
+            JOIN waste_management wm ON cs.site_id = wm.site_id
+            GROUP BY c.company_id, c.company_name
+            ORDER BY total_emission DESC
+        """
+        cursor.execute(sql)
+        result = cursor.fetchall()
+    conn.close()
+    return result
+
+# ▶ 추가 함수 5: 최다 배출 건설사 조회
+def get_top_carbon_emitter_company():
+    conn = get_connection()
+    with conn.cursor() as cursor:
+        sql = """
+            SELECT c.company_name, SUM(wm.carbon_emission) AS total_emission
+            FROM companies c
+            JOIN construction_sites cs ON c.company_id = cs.company_id
+            JOIN waste_management wm ON cs.site_id = wm.site_id
+            GROUP BY c.company_id, c.company_name
+            ORDER BY total_emission DESC
+            LIMIT 1
+        """
+        cursor.execute(sql)
+        result = cursor.fetchone()
+    conn.close()
+    return result
+
+# ▶ 추가 함수 6: 지역별 월별 탄소 배출량
+def get_monthly_emission_by_region(region_keyword: str):
+    region_keyword = region_keyword.replace("광역시", "").replace("특별시", "").replace("도", "").strip()
+    conn = get_connection()
+    with conn.cursor(pymysql.cursors.DictCursor) as cursor:  # ← 수정: DictCursor 적용
+        sql = (
+            "SELECT cs.site_name, "
+            "DATE_FORMAT(wm.disposal_date, '%%Y-%%m') AS month, "
+            "SUM(COALESCE(wm.carbon_emission,0)) AS total_emission "
+            "FROM construction_sites cs "
+            "JOIN waste_management wm ON cs.site_id = wm.site_id "
+            "WHERE cs.address LIKE %s "
+            "GROUP BY cs.site_name, month "
+            "ORDER BY cs.site_name, month"
+        )
+        cursor.execute(sql, (f"%{region_keyword}%",))
+        result = cursor.fetchall()
+        print(result)  # ← 디버깅용 출력
+        for row in result:
+            row['total_emission'] = float(row['total_emission'])
+    conn.close()
+    return result
+
+# ▶ 추가 함수 7: 지역별 상위 폐기물 종류
+def get_top_waste_types_by_region(region_keyword: str):
+    region_keyword = region_keyword.replace("광역시", "").replace("특별시", "").replace("도", "").strip()
+    conn = get_connection()
+    with conn.cursor() as cursor:
+        sql = """
+            SELECT wm.waste_type, SUM(wm.waste_amount) AS total_amount
+            FROM construction_sites cs
+            JOIN waste_management wm ON cs.site_id = wm.site_id
+            WHERE cs.address LIKE %s
+            GROUP BY wm.waste_type
+            ORDER BY total_amount DESC
+            LIMIT 10
+        """
+        cursor.execute(sql, (f"%{region_keyword}%",))
+        result = cursor.fetchall()
+        for row in result:
+            row['total_amount'] = float(row['total_amount'])
+    conn.close()
+    return result
+
 
 def get_images_for_site(company_name: str, site_name: str) -> list:
     site_id = get_site_id_by_name(site_name)
@@ -407,6 +551,8 @@ def create_audit_report_excel(company_name: str, site_name: str) -> BytesIO:
     import os
     import openpyxl
     from flask import current_app
+    from db.db_manager import get_images_for_site
+    from services.analyze_environmental import analyze_environmental_aspects
 
     tpl_path = os.path.join(current_app.root_path, 'datasets', 'templates', '감사체크리스트.xlsx')
     wb = openpyxl.load_workbook(tpl_path)
@@ -432,10 +578,11 @@ def create_audit_report_excel(company_name: str, site_name: str) -> BytesIO:
         if '감사일자' in val:
             safe_write(rng.min_row, rng.min_col, now)
 
+    # 🔥 이미지 분석 결과 (iso_checks + iso_reasons)
     images = get_images_for_site(company_name, site_name)
-    iso_checks = analyze_environmental_aspects(images)
+    iso_checks, iso_reasons = analyze_environmental_aspects(images)
 
-    # 헤더행 찾기
+    # 헤더 찾기
     header_row = None
     for row in ws.iter_rows(min_row=1, max_row=50):
         for cell in row:
@@ -445,11 +592,10 @@ def create_audit_report_excel(company_name: str, site_name: str) -> BytesIO:
                 break
         if header_row:
             break
-
     if not header_row:
         raise RuntimeError("템플릿에서 '감사항목' 헤더를 찾을 수 없습니다.")
 
-    # 열 인덱스 찾기
+    # 적합 / 부적합 열 찾기
     pass_col = fail_col = None
     for idx, cell in enumerate(ws[header_row], start=1):
         txt = str(cell.value or '').replace(' ', '')
@@ -457,11 +603,10 @@ def create_audit_report_excel(company_name: str, site_name: str) -> BytesIO:
             pass_col = idx
         elif txt == '부적합':
             fail_col = idx
-
     if not all([pass_col, fail_col]):
         raise RuntimeError("헤더에 '적합', '부적합' 열이 필요합니다.")
 
-    # 비교 대상 ISO 문항 리스트
+    # ISO 문항 리스트
     iso_questions = [
         '환경측면을 파악하기 위한 분야별 주관 부서는 설정되었는가?',
         '환경측면/영향조사표 및 환경영향평가서, 환경영향등록부가 기록되고 기능별로 정리되어 있는가?',
@@ -481,9 +626,9 @@ def create_audit_report_excel(company_name: str, site_name: str) -> BytesIO:
         '기록관리 시스템을 준수하고 있는가?'
     ]
 
-    # '감사항목' 오른쪽 셀 기준으로 ○ 표시
+    # 문항별 적합/부적합 체크
     for row in ws.iter_rows(min_row=header_row + 1, max_row=ws.max_row):
-        q_text = str(row[question_col].value or '').strip()  # 오른쪽 열 기준
+        q_text = str(row[question_col].value or '').strip()
         if not q_text:
             continue
 
@@ -494,13 +639,14 @@ def create_audit_report_excel(company_name: str, site_name: str) -> BytesIO:
                 safe_write(row[0].row, target_col, '○')
                 break
 
-    # 부적합 시트 생성
+    # 🔥 부적합 사유 시트 생성
     manual_ws = wb.create_sheet('수동확인필요')
-    manual_ws.append(['번호', '감사항목', '판단', '수동확인필요'])
-    for idx, (q, passed) in enumerate(zip(iso_questions, iso_checks), start=1):
+    manual_ws.append(['번호', '감사항목', '판정', '판단사유'])
+    for idx, (q, passed, reason) in enumerate(zip(iso_questions, iso_checks, iso_reasons), start=1):
         if not passed:
-            manual_ws.append([idx, q, '부적합', '예'])
+            manual_ws.append([idx, q, '부적합', reason])
 
+    # 파일 출력
     output = BytesIO()
     wb.save(output)
     output.seek(0)

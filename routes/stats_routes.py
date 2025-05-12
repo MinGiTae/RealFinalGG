@@ -1,3 +1,4 @@
+
 # routes/stats_routes.py
 from urllib.parse import unquote
 from collections import defaultdict
@@ -21,6 +22,8 @@ stats_bp = Blueprint('stats', __name__)
 @stats_bp.route('/analytics')
 def analytics_page():
     return render_template('GG_005_analytics_and_statstics.html')
+
+
 
 
 @stats_bp.route('/api/sites', methods=['GET'])
@@ -59,6 +62,7 @@ def monthly_stats_api():
 def waste_percentage_current():
     return jsonify(get_waste_percentage_current_month())
 
+
 @stats_bp.route('/api/emission-by-company', methods=['GET'])
 def emission_by_company():
     try:
@@ -66,6 +70,7 @@ def emission_by_company():
         return jsonify(data), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 @stats_bp.route('/api/top-emitter', methods=['GET'])
 def top_carbon_emitter():
@@ -133,6 +138,7 @@ def get_monthly_emission_by_region_route(region):
     except Exception as e:
         print("서버 에러:", e)
         return jsonify({'status': 'error', 'message': str(e)}), 500
+
 
 
 @stats_bp.route('/api/waste-ranking/<region>', methods=['GET'])
