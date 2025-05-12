@@ -8,13 +8,12 @@
 {% block content %}
 <br><br>
 
-{# 자동화 가능 문항 16개 #}
 {% set iso_questions = [
   '환경측면을 파악하기 위한 분야별 주관 부서는 설정되었는가?',
-  '환경측면/영향조사표 및 환경영향평가서, 환경영향등록부가 기록되고 기능별로 정리되어 있는가?',
+  '환경측면/영향조사표 및 환경영향등록부가 기록되고 기능별로 정리되어 있는가?',
   '환경측면과 관련된 환경영향은 누락 없이 파악되고 있는가?',
   '환경측면의 중요성에 대한 평가는 정해진 기준을 준수하는가?',
-  '중요한 환경영향과 관련된 환경측면에 대한 정보를 최신의 자료로 유지하고 있는가?',
+  '중요한 환경영향과 관련된 환경측면 정보를 최신 자료로 유지하고 있는가?',
   '중요한 환경측면과 관련된 활동 및 운영이 식별되고 관련절차가 수립되고 기록되고 있는가?',
   '외주업체와 계약자에게 관련된 요구사항을 전달하는 의사소통은 수립되어 있는가?',
   '절차에 운영기준은 명시되고 있는가?',
@@ -32,76 +31,67 @@
   <!-- ① 회사/현장 선택 -->
   <div class="search-container">
     <h1 id="site-list-title">회사/현장 선택</h1>
-    <div id="select-form">
-      <input type="hidden" id="company-name-input" />
-      <input type="hidden" id="site-name-input" />
-      <div class="selection-wrapper">
-        <select id="company-select">
-          <option value="" disabled selected>회사를 선택하세요</option>
-          {% for comp in companies %}
-            <option value="{{ comp.company_name }}">{{ comp.company_name }}</option>
-          {% endfor %}
-        </select>
-        <select id="site-select" disabled>
-          <option value="" disabled selected>현장을 선택하세요</option>
-        </select>
-      </div>
-      <div id="selected-info">선택된 회사: – / 현장: –</div>
+    <div class="selection-wrapper">
+      <select id="company-select">
+        <option value="" disabled selected>회사를 선택하세요</option>
+        {% for comp in companies %}
+          <option value="{{ comp.company_name }}">{{ comp.company_name }}</option>
+        {% endfor %}
+      </select>
+      <select id="site-select" disabled>
+        <option value="" disabled selected>현장을 선택하세요</option>
+      </select>
     </div>
+    <div id="selected-info">선택된 회사: – / 현장: –</div>
   </div>
 
-  <!-- ② 체크리스트 & 자동 체크 화살표 -->
-  <div class="table-container0">
-    <div class="table-container">
-      <!-- ISO 전체 16문항 -->
-      <div class="table-column" id="iso-column">
-        <div class="header">자동 감사 항목 (총 16문항)</div>
-        {% for q in iso_questions %}
-          <div class="row">
-            <span class="question"><strong>{{ loop.index }}.</strong> {{ q }}</span>
-            <span class="status-circle arrow-target"></span>
-          </div>
-        {% endfor %}
-        <div class="complete-button-container">
-          <button id="Button3">완료</button>
+  <!-- ② 체크리스트 & 자동 체크 -->
+  <div class="table-container">
+    <div class="table-column" id="iso-column">
+      <div class="header">자동 감사 항목 (총 16문항)</div>
+      {% for q in iso_questions %}
+        <div class="row">
+          <span class="question"><strong>{{ loop.index }}.</strong> {{ q }}</span>
+          <span class="status-circle arrow-target"></span>
         </div>
+      {% endfor %}
+      <div class="complete-button-container">
+        <button id="Button3">완료</button>
       </div>
-
-      <!-- 화살표 -->
-      <img id="arrow" src="{{ url_for('static', filename='img/yellow-arrow.png') }}" alt="화살표" />
     </div>
+    <img id="arrow" src="{{ url_for('static', filename='img/yellow-arrow.png') }}" alt="화살표" />
+  </div>
 
-    <!-- ③ 수동 확인 목록 -->
-    <div id="manual-section">
-      <h3>수동 확인이 필요한 항목</h3>
-      <ul id="manual-list"></ul>
-    </div>
+  <!-- ③ 수동 확인 목록 -->
+  <div id="manual-section">
+    <h3>수동 확인이 필요한 항목</h3>
+    <ul id="manual-list"></ul>
+  </div>
 
-    <!-- ④ 결과 테이블 -->
-    <div class="table-container2">
-      <table id="result-table">
-        <thead>
-          <tr>
-            <th>No</th>
-            <th>항목</th>
-            <th>판단</th>
-            <th>부적합 사유</th>
-            <th>확인 일시</th>
-            <th>상세보기</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
+  <!-- ④ 결과 테이블 -->
+  <div class="table-container2">
+    <table id="result-table">
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>항목</th>
+          <th>판단</th>
+          <th>부적합 사유</th>
+          <th>확인 일시</th>
+          <th>상세보기</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
-    <!-- ⑤ 출력 버튼 -->
-    <div id="Button">
-      <button id="Button1">EXCEL 출력하기</button>
-    </div>
+  <!-- ⑤ 출력 버튼 -->
+  <div id="Button">
+    <button id="Button1">EXCEL 출력하기</button>
   </div>
 </div>
 
-<!-- 상세 판단 근거 모달 -->
+<!-- 모달 -->
 <div id="detail-modal" class="modal">
   <div class="modal-content">
     <span class="modal-close">&times;</span>
@@ -110,8 +100,6 @@
   </div>
 </div>
 
-<!-- 외부 라이브러리 및 메인 스크립트 -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="{{ url_for('static', filename='js/GG_006_createlift.js') }}"></script>
 {% endblock %}

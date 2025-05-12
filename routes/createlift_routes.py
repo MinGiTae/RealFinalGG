@@ -5,11 +5,11 @@ from db.db_manager import (
     get_site_id_by_name,
     get_site_by_id,
     get_images_for_site,
-    analyze_environmental_aspects,
     insert_audit_session,
     insert_audit_result,
     create_audit_report_excel
 )
+from services.analyze_environmental import analyze_environmental_aspects  # ✅ 빠졌으면 추가
 
 createlift_bp = Blueprint('createlift', __name__)
 
@@ -21,7 +21,6 @@ def show_createlift():
     companies = get_all_companies()
     return render_template('GG_006_createlift.html', companies=companies)
 
-
 # =========================
 # 2) AJAX: 회사명 → 현장 리스트
 # =========================
@@ -30,7 +29,6 @@ def search_site():
     company_name = request.args.get('keyword', '')
     sites = get_sites_by_company(company_name)
     return jsonify([{"site_name": s} for s in sites])
-
 
 # =========================
 # 3) AJAX: 현장 선택 → 자동 감사 실행 (16문항)
@@ -42,7 +40,7 @@ def select_site():
 
     # 1) 이미지 분석 및 자동 판단
     images = get_images_for_site(company_name, site_name)
-    iso_checks = analyze_environmental_aspects(images)  # ✅ 총 16문항 결과
+    iso_checks, iso_reasons = analyze_environmental_aspects(images)  # ✅ results + reasons
 
     # 2) DB 저장
     site_id = get_site_id_by_name(site_name)
@@ -51,13 +49,13 @@ def select_site():
     session_id = insert_audit_session(company_id, site_id, performed_by='system')
 
     for idx, passed in enumerate(iso_checks, start=1):
-        insert_audit_result(session_id, 'ISO', idx, passed)
+        insert_audit_result(session_id, 'ISO', idx, passed, iso_reasons[idx-1])
 
-    # 3) 결과 리턴
+    # 3) 결과 리턴 (판정 + 사유)
     return jsonify({
-        "actual_results": iso_checks  # ✅ 총 16개 항목 결과
+        "actual_results": iso_checks,
+        "reasons": iso_reasons
     })
-
 
 # =========================
 # 4) 엑셀 다운로드

@@ -1,8 +1,6 @@
 window.addEventListener('DOMContentLoaded', () => {
   const companySelect = document.getElementById('company-select');
   const siteSelect = document.getElementById('site-select');
-  const hiddenCompany = document.getElementById('company-name-input');
-  const hiddenSite = document.getElementById('site-name-input');
   const selectedInfo = document.getElementById('selected-info');
   const arrow = document.getElementById('arrow');
   const manualList = document.getElementById('manual-list');
@@ -11,13 +9,14 @@ window.addEventListener('DOMContentLoaded', () => {
   const detailBody = document.getElementById('detail-body');
   const modalClose = document.querySelector('.modal-close');
   let selectedSiteName = null;
-  let reasons = [];
+  let latestReasons = [];
 
-  // 회사 선택 → 현장 목록 로드
+  // 회사 선택 → 현장 리스트 로드
   companySelect.addEventListener('change', () => {
-    hiddenCompany.value = companySelect.value;
-    selectedInfo.textContent = `선택된 회사: ${companySelect.value}`;
-    fetch(`/search-site?keyword=${encodeURIComponent(companySelect.value)}`)
+    const companyName = companySelect.value;
+    selectedInfo.textContent = `선택된 회사: ${companyName} / 현장: –`;
+
+    fetch(`/search-site?keyword=${encodeURIComponent(companyName)}`)
       .then(res => res.json())
       .then(data => {
         siteSelect.innerHTML = `<option disabled selected>현장을 선택하세요</option>`;
@@ -32,11 +31,11 @@ window.addEventListener('DOMContentLoaded', () => {
       .catch(console.error);
   });
 
-  // 현장 선택 → 자동 분석 요청
+  // 현장 선택 → 자동판정 요청
   siteSelect.addEventListener('change', () => {
     selectedSiteName = siteSelect.value;
-    hiddenSite.value = selectedSiteName;
-    selectedInfo.textContent = `선택된 회사: ${companySelect.value} / 현장: ${selectedSiteName}`;
+    const companyName = companySelect.value;
+    selectedInfo.textContent = `선택된 회사: ${companyName} / 현장: ${selectedSiteName}`;
 
     resultTbody.innerHTML = '';
     manualList.innerHTML = '';
@@ -45,8 +44,8 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     const body = new URLSearchParams();
-    body.set('company_name', hiddenCompany.value);
-    body.set('site_name', hiddenSite.value);
+    body.set('company_name', companyName);
+    body.set('site_name', selectedSiteName);
 
     fetch('/select-site', {
       method: 'POST',
@@ -55,19 +54,20 @@ window.addEventListener('DOMContentLoaded', () => {
     })
       .then(res => res.json())
       .then(data => {
-        const results = Array.isArray(data.actual_results) ? data.actual_results : [];
-        reasons = Array.isArray(data.reasons) ? data.reasons : [];
+        const results = data.actual_results || [];
+        latestReasons = data.reasons || [];
         autoRunChecks(results);
       })
       .catch(console.error);
   });
 
-  // 자동 체크 및 화살표 애니메이션
+  // 판정 결과 체크 + 화살표
   function autoRunChecks(results) {
     const targets = Array.from(document.querySelectorAll('#iso-column .status-circle.arrow-target'));
 
     if (results.length !== targets.length) {
-      alert(`⚠️ 서버 판정 결과(${results.length}개)가 문항 수(${targets.length}개)와 일치하지 않습니다.`);
+      alert(`서버 판정 결과(${results.length}개)가 문항 수(${targets.length}개)와 일치하지 않습니다.`);
+      return;
     }
 
     arrow.style.display = 'block';
@@ -85,7 +85,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
       const offsetX = curr.offsetLeft + curr.offsetWidth + 10;
       const offsetY = curr.offsetTop + (curr.offsetHeight / 2);
-
       arrow.style.left = `${offsetX}px`;
       arrow.style.top = `${offsetY}px`;
 
@@ -94,18 +93,17 @@ window.addEventListener('DOMContentLoaded', () => {
     })();
   }
 
-  // 완료 버튼 → 결과 테이블 및 수동 확인 리스트 작성
+  // 결과 테이블 및 수동확인 목록 작성
   document.getElementById('Button3').addEventListener('click', () => {
     resultTbody.innerHTML = '';
     manualList.innerHTML = '';
 
     const targets = Array.from(document.querySelectorAll('#iso-column .status-circle.arrow-target'));
-
     targets.forEach((c, i) => {
       const num = i + 1;
       const question = c.closest('.row').querySelector('.question').textContent.trim();
       const pass = c.classList.contains('checked');
-      const reason = reasons[i] || '-';
+      const reason = latestReasons[i] || '판단 근거 없음';
       const now = new Date().toLocaleString();
 
       const tr = document.createElement('tr');
@@ -127,14 +125,13 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // 상세 판단 근거 모달
+  // 상세 근거 모달
   document.body.addEventListener('click', e => {
     if (e.target.classList.contains('detail-btn')) {
       const idx = parseInt(e.target.dataset.index, 10);
       const question = document.querySelectorAll('#iso-column .row .question')[idx].textContent.trim();
-      const reasonDetail = reasons[idx] || '해당 항목의 상세 근거가 없습니다.';
-
-      detailBody.textContent = `【 ${idx + 1} 】 ${question}\n\n상세 판단 근거: ${reasonDetail}`;
+      const reason = latestReasons[idx] || '판단 근거 없음';
+      detailBody.innerHTML = `<strong>${question}</strong><br>${reason}`;
       detailModal.style.display = 'block';
     }
   });
@@ -144,10 +141,10 @@ window.addEventListener('DOMContentLoaded', () => {
     if (e.target === detailModal) detailModal.style.display = 'none';
   });
 
-  // EXCEL 다운로드
+  // 엑셀 다운로드
   document.getElementById('Button1').addEventListener('click', () => {
-    const company = encodeURIComponent(hiddenCompany.value);
-    const site = encodeURIComponent(hiddenSite.value);
+    const company = encodeURIComponent(companySelect.value);
+    const site = encodeURIComponent(siteSelect.value);
     window.location = `/download-audit-excel?company_name=${company}&site_name=${site}`;
   });
 });

@@ -1,3 +1,4 @@
+
 document.addEventListener('DOMContentLoaded', function () {
   const ctx1 = document.getElementById('carbonChart')?.getContext('2d');
   if (!ctx1) {
@@ -205,7 +206,7 @@ fetch('/api/waste-percentage')  // API 연동
         plugins: {
           title: {
             display: true,
-            text: '월별 폐기물 배출량 순위',
+            text: '3월 폐기물 배출량 순위',
             color: 'white',
             font: { size: 20, weight: 'bold' },
             align: 'start',
@@ -483,69 +484,6 @@ document.querySelectorAll("#korea-map path").forEach(region => {
 
 // ✅ 지도 클릭 이벤트 처리 (id="korea-map" 요소)
 
-//const ctx8 = document.getElementById('wastePopularityChart').getContext('2d');
-//const wastePopularityChart = new Chart(ctx8, {
-//  type: 'bar',
-//  data: {
-//    labels: [],
-//    datasets: [{
-//      label: '배출량 (kg)',
-//      data: [],
-//      backgroundColor: [],
-//      borderRadius: 10,
-//      barThickness: 20
-//    }]
-//  },
-//  options: {
-//    indexAxis: 'y',
-//    responsive: true,
-//    maintainAspectRatio: false,
-//    plugins: {
-//      title: {
-//        display: true,
-//        text: '현장 폐기물 배출량 순위',
-//        color: 'white',
-//        font: { size: 20, weight: 'bold' },
-//        align: 'start',
-//        padding: { bottom: 30 }
-//      },
-//      legend: { display: false },
-//      tooltip: {
-//        callbacks: {
-//          label: ctx => `${ctx.raw}kg`
-//        }
-//      }
-//    },
-//    scales: {
-//      x: {
-//        beginAtZero: true,
-//        ticks: {
-//          color: '#ccc'
-//        },
-//        grid: { color: 'rgba(255, 255, 255, 0.05)' }
-//      },
-//      y: {
-//        ticks: { color: 'white' },
-//        grid: { display: false }
-//      }
-//    }
-//  },
-//  plugins: [ChartDataLabels]
-//});
-//
-//// ✅ 백엔드에서 데이터 받아와서 차트 갱신
-//fetch('/api/waste-ranking/${regionName}')
-//  .then(res => res.json())
-//  .then(data => {
-//    const labels = data.data.map(item => item.waste_type);
-//    const values = data.data.map(item => item.total_amount);
-//    const colors = ['#f5a623', '#80deea', '#42a5f5', '#ce93d8', '#f87171', '#34d399', '#a78bfa', '#fcd34d', '#60a5fa', '#f472b6'];
-//
-//    wastePopularityChart.data.labels = labels;
-//    wastePopularityChart.data.datasets[0].data = values;
-//    wastePopularityChart.data.datasets[0].backgroundColor = colors.slice(0, labels.length);
-//    wastePopularityChart.update();
-//  });
 
 const ctx8 = document.getElementById('wastePopularityChart').getContext('2d');
 const wastePopularityChart = new Chart(ctx8, {
