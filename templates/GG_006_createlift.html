@@ -2,12 +2,11 @@
 {% block title %}리포트 생성{% endblock %}
 
 {% block extra_css %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/GG_006_createlift.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/GG_006_createlift.css') }}" />
 {% endblock %}
 
 {% block content %}
 <br><br>
-
 {% set iso_questions = [
   '환경측면을 파악하기 위한 분야별 주관 부서는 설정되었는가?',
   '환경측면/영향조사표 및 환경영향등록부가 기록되고 기능별로 정리되어 있는가?',
@@ -46,7 +45,7 @@
       {% for q in iso_questions %}
         <div class="row">
           <span class="question"><strong>{{ loop.index }}.</strong> {{ q }}</span>
-          <span class="status-circle arrow-target"></span>
+          <span class="status-circle"></span>
         </div>
       {% endfor %}
       <div class="complete-button-container">
@@ -79,13 +78,13 @@
     </table>
   </div>
 
-  <!-- ⑤ 출력 버튼 -->
+  <!-- ⑤ 엑셀 출력 버튼 -->
   <div id="Button">
     <button id="Button1">EXCEL 출력하기</button>
   </div>
 </div>
 
-<!-- 모달 -->
+<!-- 상세 모달 -->
 <div id="detail-modal" class="modal">
   <div class="modal-content">
     <span class="modal-close">&times;</span>

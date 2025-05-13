@@ -166,34 +166,63 @@ def upload_construction_site(
         conn.commit()
     conn.close()
 
-def get_site_info(company_name: str, site_name: str) -> dict:
-    conn = get_connection()
-    with conn.cursor() as cursor:
-        sql = """
-            SELECT cs.department, cs.importance_level, cs.contractor_notes, cs.calibration_date
-            FROM construction_sites cs
-            JOIN companies c ON cs.company_id = c.company_id
-            WHERE c.company_name = %s AND cs.site_name = %s
-            LIMIT 1
-        """
-        cursor.execute(sql, (company_name, site_name))
-        result = cursor.fetchone()
-    conn.close()
+# db/db_manager.py
 
-    if result:
+def get_site_info(company_name: str, site_name: str) -> dict:
+    """
+    부서·중요도·메모·교정일자 뿐 아니라,
+    survey_file_path, procedure_file_path, standard_file_path,
+    monitoring_data_path, calibration_file_path 까지 반환합니다.
+    """
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT
+                    cs.department,
+                    cs.importance_level,
+                    cs.contractor_notes,
+                    DATE_FORMAT(cs.calibration_date, '%%Y-%%m-%%d') AS calibration_date,
+                    cs.survey_file_path,
+                    cs.procedure_file_path,
+                    cs.standard_file_path,
+                    cs.monitoring_data_path,
+                    cs.calibration_file_path
+                FROM construction_sites cs
+                JOIN companies c ON cs.company_id = c.company_id
+                WHERE c.company_name = %s
+                  AND cs.site_name    = %s
+                LIMIT 1
+            """, (company_name, site_name))
+            row = cursor.fetchone()
+    finally:
+        conn.close()
+
+    if not row:
         return {
-            'department': result.get('department'),
-            'importance_level': result.get('importance_level'),
-            'contractor_notes': result.get('contractor_notes'),
-            'calibration_date': str(result.get('calibration_date')) if result.get('calibration_date') else None
+            'department': None,
+            'importance_level': None,
+            'contractor_notes': None,
+            'calibration_date': None,
+            'survey_file_path': None,
+            'procedure_file_path': None,
+            'standard_file_path': None,
+            'monitoring_data_path': None,
+            'calibration_file_path': None
         }
-    else:
-        return {
-            'department': '',
-            'importance_level': '',
-            'contractor_notes': '',
-            'calibration_date': None
-        }
+
+    return {
+        'department':           row.get('department'),
+        'importance_level':     row.get('importance_level'),
+        'contractor_notes':     row.get('contractor_notes'),
+        'calibration_date':     row.get('calibration_date'),
+        'survey_file_path':     row.get('survey_file_path'),
+        'procedure_file_path':  row.get('procedure_file_path'),
+        'standard_file_path':   row.get('standard_file_path'),
+        'monitoring_data_path': row.get('monitoring_data_path'),
+        'calibration_file_path':row.get('calibration_file_path')
+    }
+
 
 # ✅ 건설 현장 수정
 def update_construction_site(
@@ -269,25 +298,41 @@ def delete_construction_site(site_id):
 
 # ✅ 현장 전체 목록 조회
 def get_all_construction_sites():
+    """
+    construction_sites 테이블에서
+    - 기본 텍스트/숫자 컬럼
+    - DATE_FORMAT(calibration_date, '%Y-%m-%d') AS calibration_date
+    - 파일 경로 컬럼 5종 (survey|procedure|standard|monitoring|calibration)_file_path
+    를 모두 SELECT 해서 반환합니다.
+    """
     conn = get_connection()
-    with conn.cursor() as cursor:
-        cursor.execute("""
-            SELECT site_id,
-                   site_name,
-                   address,
-                   manager_name,
-                   latitude,
-                   longitude,
-                   company_id,
-                   department,
-                   importance_level AS importance_level,
-                   contractor_notes,
-                   DATE_FORMAT(calibration_date, '%%Y-%%m-%%d') AS calibration_date
-              FROM construction_sites
-        """)
-        result = cursor.fetchall()
-    conn.close()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT
+                    site_id,
+                    site_name,
+                    address,
+                    manager_name,
+                    latitude,
+                    longitude,
+                    company_id,
+                    department,
+                    importance_level,
+                    contractor_notes,
+                    DATE_FORMAT(calibration_date, '%Y-%m-%d') AS calibration_date,
+                    survey_file_path,
+                    procedure_file_path,
+                    standard_file_path,
+                    monitoring_data_path,
+                    calibration_file_path
+                FROM construction_sites
+            """)
+            result = cursor.fetchall()
+    finally:
+        conn.close()
     return result
+
 # alias for site list
 def get_all_sites():
     return get_all_construction_sites()
@@ -676,15 +721,13 @@ def create_audit_report_excel(company_name: str, site_name: str) -> BytesIO:
     ws = wb.active
 
     def safe_write(row, col, value):
-        # 병합된 셀 범위 체크
         for rng in ws.merged_cells.ranges:
             if rng.min_row <= row <= rng.max_row and rng.min_col <= col <= rng.max_col:
                 ws.cell(rng.min_row, rng.min_col).value = value
                 return
-        # 병합 안된 셀은 그냥 씀
         ws.cell(row=row, column=col).value = value
 
-    # 상단 기본값 세팅
+    # 1) 상단 정보 채우기
     now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     for rng in ws.merged_cells.ranges:
         val = str(ws.cell(rng.min_row, rng.min_col).value or '')
@@ -695,35 +738,38 @@ def create_audit_report_excel(company_name: str, site_name: str) -> BytesIO:
         if '감사일자' in val:
             safe_write(rng.min_row, rng.min_col, now_str)
 
-    # 데이터 가져오기
+    # 2) 데이터 조회 및 판정 로직 실행
     images = get_images_for_site(company_name, site_name)
     site_info = get_site_info(company_name, site_name)
     iso_checks, iso_reasons = analyze_environmental_aspects(images, site_info)
+    print(f"[DEBUG] iso_checks={iso_checks}")
+    print(f"[DEBUG] iso_reasons={iso_reasons}")
 
-    # 헤더 찾기
+    # 3) 헤더행 찾기
     header_row = None
     for row in ws.iter_rows(min_row=1, max_row=50):
         for cell in row:
-            if str(cell.value).strip() == '감사항목':
+            if str(cell.value or '').strip() == '감사항목':
                 header_row = cell.row
                 break
         if header_row:
             break
-    if not header_row:
-        raise RuntimeError('엑셀 템플릿에서 헤더 정보를 찾을 수 없습니다.')
+    print(f"[DEBUG] header_row={header_row}")
+    if header_row is None:
+        raise RuntimeError('감사항목 헤더를 찾을 수 없습니다.')
 
-    # 적합/부적합 컬럼 찾기
-    pass_col = fail_col = None
+    # 4) 컬럼 인덱스 찾기
+    cols = {'question':None, 'pass':None, 'fail':None}
     for idx, cell in enumerate(ws[header_row], start=1):
-        txt = str(cell.value or '').replace(' ', '').replace('\n', '').strip()
-        if txt == '적합':
-            pass_col = idx
-        elif txt == '부적합':
-            fail_col = idx
-    if fail_col is None:
-        raise RuntimeError(f'엑셀 헤더 "부적합" 열을 찾을 수 없습니다. header_row={header_row}, pass_col={pass_col}, fail_col={fail_col}')
+        text = str(cell.value or '').replace(' ', '').strip()
+        if text == '감사항목': cols['question'] = idx
+        elif text == '적합': cols['pass'] = idx
+        elif text == '부적합': cols['fail'] = idx
+    print(f"[DEBUG] cols={cols}")
+    if None in cols.values():
+        raise RuntimeError(f"컬럼 인덱스 누락: {cols}")
 
-    # 문항 리스트
+    # 5) 질문 목록
     iso_questions = [
         '환경측면을 파악하기 위한 분야별 주관 부서는 설정되었는가?',
         '환경측면/영향조사표 및 환경영향등록부가 기록되고 기능별로 정리되어 있는가?',
@@ -737,30 +783,32 @@ def create_audit_report_excel(company_name: str, site_name: str) -> BytesIO:
         '사용하고 있는 모니터링 및 측정 장비를 교정, 검증하며 관련기록을 유지하는가?'
     ]
 
-    # 체크표시 찍기
-    for row in ws.iter_rows(min_row=header_row + 1, max_row=ws.max_row):
-        q_text = str(row[0].value or '').strip()
-        if not q_text:
-            continue
+    # 6) 데이터 영역에 표시
+    question_text_col = cols['question'] + 1  # 실제 질문 텍스트는 헤더 다음 열에 위치
+    print(f"[DEBUG] question_text_col={question_text_col}")
+    for r in range(header_row+1, ws.max_row+1):
+        question_cell = ws.cell(row=r, column=question_text_col)
+        q_text = str(question_cell.value or '').strip()
+        print(f"[DEBUG] Row {r} question='{q_text}'")
+        if q_text in iso_questions:
+            idx = iso_questions.index(q_text)
+            passed = iso_checks[idx]
+            col_to_mark = cols['pass'] if passed else cols['fail']
+            print(f"[DEBUG] marking idx={idx} passed={passed} at row={r}, col={col_to_mark}")
+            safe_write(r, col_to_mark, '○')
 
-        for idx, standard_q in enumerate(iso_questions):
-            if q_text.replace(' ', '').replace('\n', '') in standard_q.replace(' ', '').replace('\n', ''):
-                result = iso_checks[idx]
-                target_col = pass_col if result else fail_col
-                safe_write(row[0].row, target_col, '○')
-                break
-
-    # 수동확인필요 시트
+    # 7) 수동확인필요 시트 작성
     manual_ws = wb.create_sheet('수동확인필요')
-    manual_ws.append(['번호', '감사항목', '판정', '판단사유'])
-    for idx, (q, passed, reason) in enumerate(zip(iso_questions, iso_checks, iso_reasons), start=1):
-        if not passed:
-            manual_ws.append([idx, q, '부적합', reason])
+    manual_ws.append(['번호','감사항목','판정','판단사유'])
+    for i, (ok, note) in enumerate(zip(iso_checks, iso_reasons), start=1):
+        if not ok:
+            manual_ws.append([i, iso_questions[i-1], '부적합', note])
 
-    output = BytesIO()
-    wb.save(output)
-    output.seek(0)
-    return output
+    # 8) 출력
+    buf = BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return buf
 
 def get_all_waste_objects():
     conn = get_connection()

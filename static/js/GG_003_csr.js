@@ -1,125 +1,154 @@
-// GG_003_csr.js (최종판)
-// ----------------------------------------
+// static/js/GG_003_csr.js
+// 최종판: Flash 메시지, 파일 링크 표시 체크, 날짜/좌표/파일 필드 완전 처리
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 1) 지도 초기화
-  const mapContainer = document.getElementById('map');
-  const map = new kakao.maps.Map(mapContainer, {
-    center: new kakao.maps.LatLng(36.348504088450035, 127.38215399734425),
-    level: 3
-  });
+  // 플래시 메시지 헬퍼
+  function showFlash(type, message) {
+    let wrapper = document.querySelector('.flash-message-wrapper');
+    if (!wrapper) {
+      wrapper = document.createElement('div');
+      wrapper.className = 'flash-message-wrapper';
+      document.body.appendChild(wrapper);
+    }
+    const msg = document.createElement('div');
+    msg.className = `flash-message ${type}`;
+    msg.textContent = message;
+    wrapper.appendChild(msg);
+    setTimeout(() => {
+      msg.remove();
+      if (!wrapper.hasChildNodes()) wrapper.remove();
+    }, 3000);
+  }
+
+  // 1) 지도 및 지오코더 초기화
+  const map = new kakao.maps.Map(
+    document.getElementById('map'),
+    { center: new kakao.maps.LatLng(36.348504088450035, 127.38215399734425), level: 3 }
+  );
   const geocoder = new kakao.maps.services.Geocoder();
   setTimeout(() => {
     map.relayout();
     map.setCenter(new kakao.maps.LatLng(36.348504088450035, 127.38215399734425));
   }, 100);
 
-  // 2) 폼 요소 참조
-  const form            = document.getElementById('siteForm');
-  const inputSiteId     = document.getElementById('site_id');
-  const inputName       = document.getElementById('search-input1');
-  const inputAddress    = document.getElementById('search-input2');
-  const inputManager    = document.getElementById('search-input3');
-  const inputCompany    = document.getElementById('companySelect');
-  const inputDept       = document.getElementById('departmentSelect');
-  const inputSurvey     = document.getElementById('survey_file');
-  const inputImportance = document.getElementById('importanceLevel');
-  const inputProcedure  = document.getElementById('procedure_file');
-  const inputContractor = document.getElementById('contractor_notes');
-  const inputStandard   = document.getElementById('standard_file');
-  const inputMonitoring = document.getElementById('monitoring_data');
-  const inputCalDate    = document.getElementById('calibration_date');
-  const inputCalFile    = document.getElementById('calibration_file');
-  const inputLatitude   = document.getElementById('latitude');
-  const inputLongitude  = document.getElementById('longitude');
+  // 2) 폼 필드 참조
+  const form = document.getElementById('siteForm');
+  const fields = {
+    siteId:     document.getElementById('site_id'),
+    name:       document.getElementById('search-input1'),
+    address:    document.getElementById('search-input2'),
+    manager:    document.getElementById('search-input3'),
+    company:    document.getElementById('companySelect'),
+    department: document.getElementById('departmentSelect'),
+    importance: document.getElementById('importanceLevel'),
+    notes:      document.getElementById('contractor_notes'),
+    calDate:    document.getElementById('calibration_date'),
+    lat:        document.getElementById('latitude'),
+    lng:        document.getElementById('longitude')
+  };
 
-  // 3) 자동완성 검색 요소
-  const inputSearch4 = document.getElementById('search-input4');
+  // 3) 파일 입력 필드 & 링크 텍스트박스 생성
+  const fileFields = {
+    survey_file:     { input: document.getElementById('survey_file'),      pathKey: 'survey_file_path' },
+    procedure_file:  { input: document.getElementById('procedure_file'),    pathKey: 'procedure_file_path' },
+    standard_file:   { input: document.getElementById('standard_file'),     pathKey: 'standard_file_path' },
+    monitoring_data: { input: document.getElementById('monitoring_data'),   pathKey: 'monitoring_data_path' },
+    calibration_file:{ input: document.getElementById('calibration_file'),  pathKey: 'calibration_file_path' }
+  };
+
+  // 링크용 텍스트박스 추가
+  Object.values(fileFields).forEach(field => {
+    const link = document.createElement('input');
+    link.type = 'text';
+    link.readOnly = true;
+    link.className = 'file-link-text';
+    link.style.display = 'none';
+    link.style.cursor = 'pointer';
+    field.input.after(link);
+    field.link = link;
+    link.addEventListener('click', () => {
+      const url = link.dataset.url;
+      if (url) window.open(url, '_blank');
+    });
+  });
+
+  // 4) 자동완성 요소
+  const searchInput = document.getElementById('search-input4');
   const resultsBox  = document.getElementById('autocomplete-results');
 
-  // 4) 마커 저장용
+  // 5) 마커 데이터 저장
   const markers     = [];
   const infowindows = [];
-  let tempMarker         = null;
-  let selectedMarker     = null;
-  let selectedInfowindow = null;
-  let siteNames          = [];
+  let tempMarker, selectedMarker, selectedInfowindow;
+  const siteNames  = [];
 
-  // 5) 마커 클릭 시 폼 채우기
+  // 6) 마커 클릭 핸들러: 폼 및 링크 채우기
   function openMarker(marker) {
     const data = markers.find(m => m.marker === marker);
     if (!data) return;
 
-    // 이전 선택 마커 리셋
+    // 이전 선택 리셋
     if (selectedMarker) {
       selectedMarker.setImage(new kakao.maps.MarkerImage(
-        '/static/img/hammer.png',
-        new kakao.maps.Size(40,40)
+        '/static/img/hammer.png', new kakao.maps.Size(40,40)
       ));
       selectedInfowindow.close();
     }
 
-    // 폼에 데이터 채우기
-    inputSiteId.value     = data.siteId;
-    inputName.value       = data.siteName;
-    inputAddress.value    = data.address;
-    inputManager.value    = data.managerName || '';
-    inputCompany.value    = data.companyId;
-    inputDept.value       = data.department || '';
-    inputImportance.value = data.importance_level || '';
-    inputContractor.value = data.contractor_notes  || '';
-    inputCalDate.value    = data.calibration_date  || '';
+    // 폼 데이터 채우기
+    fields.siteId.value     = data.site_id;
+    fields.name.value       = data.site_name;
+    fields.address.value    = data.address;
+    fields.manager.value    = data.manager_name    || '';
+    fields.company.value    = data.company_id;
+    fields.department.value = data.department      || '';
+    fields.importance.value = data.importance_level|| '';
+    fields.notes.value      = data.contractor_notes|| '';
+    fields.calDate.value    = data.calibration_date|| '';
 
-    // 파일 input은 초기화하지 않음 (수정됨)
-    [ inputSurvey, inputProcedure, inputStandard, inputMonitoring ]
-      .forEach(el => el.value = '');
+    // 파일 링크 표시/숨김
+    Object.values(fileFields).forEach(({ pathKey, link }) => {
+      const url = data[pathKey] || '';
+      if (url) {
+        link.value = url.split('/').pop();
+        link.dataset.url = url;
+        link.style.display   = 'inline-block';
+      } else {
+        link.value = '';
+        link.dataset.url = '';
+        link.style.display   = 'none';
+      }
+    });
 
+    // 좌표 업데이트
     const pos = marker.getPosition();
-    inputLatitude.value   = pos.getLat();
-    inputLongitude.value  = pos.getLng();
+    fields.lat.value = pos.getLat();
+    fields.lng.value = pos.getLng();
 
-    // 새 마커 하이라이트
+    // 선택 마커 강조 & 인포윈도우
     selectedMarker     = marker;
-    selectedInfowindow = infowindows[markers.indexOf(data)];
     selectedMarker.setImage(new kakao.maps.MarkerImage(
-      '/static/img/hammer.png',
-      new kakao.maps.Size(50,50)
+      '/static/img/hammer.png', new kakao.maps.Size(50,50)
     ));
+    selectedInfowindow = infowindows[markers.indexOf(data)];
     selectedInfowindow.open(map, marker);
   }
 
-  // 6) DB 마커 불러오기
+  // 7) 서버에서 마커 데이터 로드 & 중앙 정렬된 인포윈도우
   fetch('/csr/get_sites')
     .then(res => res.json())
     .then(list => {
       list.forEach(site => {
-        const coords      = new kakao.maps.LatLng(site.latitude, site.longitude);
-        const markerImage = new kakao.maps.MarkerImage(
-          '/static/img/hammer.png',
-          new kakao.maps.Size(40,40)
-        );
-        const marker      = new kakao.maps.Marker({
-          position: coords,
-          map,
-          image: markerImage
-        });
+        const coords    = new kakao.maps.LatLng(site.latitude, site.longitude);
+        const markerImg = new kakao.maps.MarkerImage('/static/img/hammer.png', new kakao.maps.Size(40,40));
+        const marker    = new kakao.maps.Marker({ position: coords, map, image: markerImg });
+        // 중앙 정렬(padding 포함)
         const iw = new kakao.maps.InfoWindow({
-          content: `<div style="width:150px;text-align:center;padding:6px 0;">${site.site_name}</div>`
+          content: `<div style="width:150px; text-align:center; padding:6px 0;">${site.site_name}</div>`
         });
         iw.open(map, marker);
 
-        markers.push({
-          marker,
-          siteId          : site.site_id,
-          siteName        : site.site_name,
-          address         : site.address,
-          managerName     : site.manager_name,
-          companyId       : site.company_id,
-          department      : site.department,
-          importance_level: site.importance_level,
-          contractor_notes: site.contractor_notes,
-          calibration_date: site.calibration_date
-        });
+        markers.push({ marker, ...site });
         infowindows.push(iw);
         siteNames.push(site.site_name);
 
@@ -127,113 +156,80 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-  // 7) 지도 클릭 → 폼 리셋 및 임시 마커
+  // 8) 지도 클릭 → 폼 초기화 + 임시 마커
   kakao.maps.event.addListener(map, 'click', e => {
     const pos = e.latLng;
     geocoder.coord2Address(pos.getLng(), pos.getLat(), (res, status) => {
       if (status === kakao.maps.services.Status.OK) {
-        inputAddress.value = res[0].address.address_name;
+        fields.address.value = res[0].address.address_name;
       }
     });
 
     // 폼 초기화
-    [ inputSiteId, inputName, inputManager,
-      inputCompany, inputDept, inputImportance,
-      inputContractor, inputCalDate ]
-      .forEach(el => el.value = '');
-    [ inputSurvey, inputProcedure,
-      inputStandard, inputMonitoring,
-      inputCalFile ]
-      .forEach(el => el.value = '');
+    Object.values(fields).forEach(f => { if (['INPUT','SELECT','TEXTAREA'].includes(f.tagName)) f.value=''; });
+    Object.values(fileFields).forEach(({ link }) => link.style.display='none');
 
-    inputLatitude.value  = pos.getLat();
-    inputLongitude.value = pos.getLng();
+    fields.lat.value = pos.getLat();
+    fields.lng.value = pos.getLng();
 
     if (tempMarker) tempMarker.setMap(null);
-    tempMarker = new kakao.maps.Marker({
-      position: pos,
-      map,
-      opacity: 0.5,
-      clickable: false
-    });
+    tempMarker = new kakao.maps.Marker({ position: pos, map, opacity:0.5, clickable:false });
   });
 
-  // 8) 버튼별 핸들러 분리
+  // 9) CRUD 버튼 핸들러
   document.getElementById('ButtonUpdate').addEventListener('click', () => {
-    if (!inputSiteId.value) {
-      alert('수정할 현장을 선택하세요.');
-      return;
-    }
-    const formData = new FormData(form);
-    fetch('/csr/update_site', {
-      method: 'POST',
-      body: formData
-    })
-    .then(r => r.json())
-    .then(res => {
-      if (res.success) location.reload();
-      else alert('❌ 업데이트 실패: ' + res.error);
-    });
+    if (!fields.siteId.value) return showFlash('error', '수정할 현장을 선택하세요.');
+    const fd = new FormData(form);
+    fetch('/csr/update_site', { method: 'POST', body: fd })
+      .then(r => r.json())
+      .then(res => {
+        if (res.success) { showFlash('success', '업데이트 성공'); setTimeout(() => location.reload(), 1000); }
+        else showFlash('error', `업데이트 실패: ${res.error}`);
+      });
   });
 
   document.getElementById('ButtonDelete').addEventListener('click', () => {
-    if (!inputSiteId.value) {
-      alert('삭제할 현장을 선택하세요.');
-      return;
-    }
+    if (!fields.siteId.value) return showFlash('error', '삭제할 현장을 선택하세요.');
     if (!confirm('정말 삭제하시겠습니까?')) return;
     fetch('/csr/delete_site', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ site_id: parseInt(inputSiteId.value) })
+      body: JSON.stringify({ site_id: parseInt(fields.siteId.value) })
     })
-    .then(r => r.json())
-    .then(res => {
-      if (res.success) location.reload();
-      else alert('❌ 삭제 실패: ' + res.error);
-    });
+      .then(r => r.json())
+      .then(res => {
+        if (res.success) { showFlash('success', '삭제 성공'); setTimeout(() => location.reload(), 1000); }
+        else showFlash('error', `삭제 실패: ${res.error}`);
+      });
   });
 
-  // 9) 자동완성 및 이동
-  inputSearch4.addEventListener('input', () => {
-    const q = inputSearch4.value.trim().toLowerCase();
-    if (!q) {
-      resultsBox.style.display = 'none';
-      return;
-    }
-    const filtered = siteNames.filter(name => name.toLowerCase().startsWith(q));
+  // 10) 자동완성 & 이동
+  searchInput.addEventListener('input', () => {
+    const q = searchInput.value.trim().toLowerCase();
+    if (!q) { resultsBox.style.display='none'; return; }
+    const filtered = siteNames.filter(n => n.toLowerCase().startsWith(q));
     if (filtered.length) {
-      resultsBox.style.display = 'block';
-      resultsBox.innerHTML = filtered
-        .map(name => `<div class="autocomplete-item">${name}</div>`)
-        .join('');
+      resultsBox.style.display='block';
+      resultsBox.innerHTML = filtered.map(n => `<div class="autocomplete-item">${n}</div>`).join('');
       document.querySelectorAll('.autocomplete-item').forEach(item =>
-        item.addEventListener('click', () => {
-          inputSearch4.value = item.textContent;
-          resultsBox.style.display = 'none';
-        })
+        item.addEventListener('click', () => { searchInput.value=item.textContent; resultsBox.style.display='none'; })
       );
-    } else {
-      resultsBox.style.display = 'none';
-    }
+    } else resultsBox.style.display='none';
   });
 
-  inputSearch4.addEventListener('keydown', e => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      document.getElementById('Button5').click();
-    }
+  searchInput.addEventListener('keydown', e => {
+    if (e.key==='Enter') { e.preventDefault(); document.getElementById('Button5').click(); }
   });
 
   document.getElementById('Button5').addEventListener('click', () => {
-    const data = markers.find(m => m.siteName === inputSearch4.value.trim());
-    if (data) map.setCenter(data.marker.getPosition());
-    else alert('해당 현장을 찾을 수 없습니다.');
-    resultsBox.style.display = 'none';
+    const found = markers.find(m => m.siteName === searchInput.value.trim());
+    if (found) map.setCenter(found.marker.getPosition());
+    else showFlash('error', '해당 현장을 찾을 수 없습니다.');
+    resultsBox.style.display='none';
   });
 
-  // 10) 회사 모달 열기
+  // 11) 회사 모달 열기
   document.getElementById('openCompanyModal').addEventListener('click', () => {
-    document.getElementById('companyModal').style.display = 'block';
+    document.getElementById('companyModal').style.display='block';
   });
 });

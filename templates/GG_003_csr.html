@@ -1,9 +1,17 @@
+{# templates/GG_003_csr.html #}
 {% extends 'base.html' %}
 
 {% block title %}건설 현장 관리{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="/static/css/GG_003_csr.css" />
+<style>
+  /* 파일 링크는 처음에 숨김 */
+  .current-file {
+    display: none;
+    margin-bottom: 12px;
+  }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -60,10 +68,12 @@
         {% endfor %}
       </datalist>
 
-      <!-- 추가 입력 -->
+      <!-- 영향조사표/등록부 파일 -->
       <label for="survey_file">영향조사표/등록부 파일 업로드</label>
       <input type="file" id="survey_file" name="survey_file">
+      <div id="survey-file-link" class="current-file"></div>
 
+      <!-- 중요도 평가 -->
       <label for="importanceLevel">중요도 평가</label>
       <select id="importanceLevel" name="importance_level">
         <option value="">선택하세요</option>
@@ -72,33 +82,42 @@
         <option value="low">Low</option>
       </select>
 
+      <!-- 절차 문서 -->
       <label for="procedure_file">절차 문서 업로드</label>
       <input type="file" id="procedure_file" name="procedure_file">
+      <div id="procedure-file-link" class="current-file"></div>
 
+      <!-- 계약자 소통 메모 -->
       <label for="contractor_notes">계약자 소통 메모</label>
       <textarea id="contractor_notes" name="contractor_notes" placeholder="계약자 요청사항 내용을 입력하세요"></textarea>
 
+      <!-- 운영 기준 문서 -->
       <label for="standard_file">운영 기준 문서 업로드</label>
       <input type="file" id="standard_file" name="standard_file">
+      <div id="standard-file-link" class="current-file"></div>
 
+      <!-- 모니터링 데이터 -->
       <label for="monitoring_data">모니터링 데이터 (CSV)</label>
       <input type="file" id="monitoring_data" name="monitoring_data">
+      <div id="monitoring-data-link" class="current-file"></div>
 
+      <!-- 교정일자 -->
       <label for="calibration_date">교정일자</label>
       <input type="date" id="calibration_date" name="calibration_date">
 
+      <!-- 교정 증명서 -->
       <label for="calibration_file">교정 증명서 업로드</label>
       <input type="file" id="calibration_file" name="calibration_file">
+      <div id="calibration-file-link" class="current-file"></div>
 
+      <!-- 숨겨진 필드 -->
       <input type="hidden" id="site_id" name="site_id">
       <input type="hidden" id="latitude" name="latitude">
       <input type="hidden" id="longitude" name="longitude">
 
       <!-- 액션 버튼 -->
       <div class="button-group">
-        <!-- Create: 일반 제출 -->
         <button type="submit" id="Button1">Create</button>
-        <!-- Update & Delete: JS 핸들링 -->
         <button type="button" id="ButtonUpdate">Update</button>
         <button type="button" id="ButtonDelete">Delete</button>
         <button type="button" id="openCompanyModal">회사등록</button>

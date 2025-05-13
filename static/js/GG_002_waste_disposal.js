@@ -1,12 +1,31 @@
 // static/js/GG_002_waste_disposal.js
 // ================================
 // 🛠️ GarbageGuard 프로젝트: 폐기물 처리 페이지 JS
+
 // 📌 템플릿에서 주입된 전역 변수
 console.log('[WasteDisposal.js] 로드 완료:', {
   CURRENT_SITE_ID: window.CURRENT_SITE_ID,
   resultImgPath: window.resultImgPath,
   detectedDetailed: window.detectedDetailed
 });
+
+// 🚩 플래시 메시지 헬퍼
+function showFlash(type, message) {
+  let wrapper = document.querySelector('.flash-message-wrapper');
+  if (!wrapper) {
+    wrapper = document.createElement('div');
+    wrapper.className = 'flash-message-wrapper';
+    document.body.appendChild(wrapper);
+  }
+  const msg = document.createElement('div');
+  msg.className = `flash-message ${type}`;
+  msg.textContent = message;
+  wrapper.appendChild(msg);
+  setTimeout(() => {
+    msg.remove();
+    if (!wrapper.hasChildNodes()) wrapper.remove();
+  }, 3000);
+}
 
 let wasteChart;
 let carbonChart;
@@ -22,7 +41,6 @@ function initializeCharts() {
       datasets: [{
         label: '개수',
         data: [],
-        // 색상은 백엔드와 일치하도록 설정
         backgroundColor: '#ffff99',
         borderRadius: 10
       }]
@@ -90,7 +108,10 @@ function loadMonthlyStats(siteId) {
       carbonChart.data.datasets[0].data = sorted.map(x => x.emission);
       carbonChart.update();
     })
-    .catch(e => console.error('[loadMonthlyStats] 실패', e));
+    .catch(e => {
+      console.error('[loadMonthlyStats] 실패', e);
+      showFlash('error', '월별 통계 로드에 실패했습니다.');
+    });
 }
 
 // ⛓️ 회사 - 현장 바인딩 및 표시
@@ -132,11 +153,14 @@ function bindPanzoom() {
 
 // 💾 분석 결과 서버 저장 바인딩
 function bindSave() {
-  document.querySelector('.save-button').addEventListener('click', () => {
+  document.querySelector('.save-button').addEventListener('click', e => {
+    // 기본 submit 차단
+    e.preventDefault();
+
     const imgPath = window.resultImgPath;
     const data = window.detectedDetailed;
     if (!imgPath || !Array.isArray(data) || data.length === 0) {
-      return alert('저장할 분석 결과가 없습니다.');
+      return showFlash('error', '저장할 분석 결과가 없습니다.');
     }
 
     const counts = {};
@@ -155,8 +179,14 @@ function bindSave() {
       })
     })
     .then(res => res.json())
-    .then(resp => alert(resp.message))
-    .catch(() => alert('저장 실패'));
+    .then(resp => {
+      showFlash('success', resp.message);
+      // 1초 뒤 갤러리로 이동
+      setTimeout(() => {
+        window.location.href = '/gallery';
+      }, 1000);
+    })
+    .catch(() => showFlash('error', '저장 실패'));
   });
 }
 

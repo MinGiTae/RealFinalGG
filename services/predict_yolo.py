@@ -14,7 +14,7 @@ def run_yolo_and_save_result(input_img_path, save_dir, save_name):
     - label_counts (dict): 탐지된 객체별 개수
     """
 
-    model_path = "runs/detect/train_codd_final7/weights/best.pt"
+    model_path = r"C:\Users\minhw\RealFinalGG\brick_concrete_v26\weights\best.pt"
     if not os.path.exists(model_path):
         print(f"[YOLO❌] 모델 파일 없음: {model_path}")
         return None, {}
