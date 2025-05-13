@@ -25,7 +25,7 @@ app.register_blueprint(gallery_bp)                         # /gallery
 app.register_blueprint(predict_bp)                         # /input_waste
 app.register_blueprint(csr_bp)                             # /csr
 app.register_blueprint(createlift_bp)                      # /Create_lift
-app.register_blueprint(recycle_bp)
+# app.register_blueprint(recycle_bp)
 
 if __name__ == '__main__':
     import pprint
