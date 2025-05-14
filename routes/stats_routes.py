@@ -10,7 +10,7 @@ from flask import request
 from db.db_manager import get_all_construction_sites
 from db.db_manager import get_emissions_by_waste_type
 from db.db_manager import get_waste_amount_by_type
-from db.db_manager import get_monthly_stats
+from db.db_manager import get_monthly_stats2
 from db.db_manager import get_waste_percentage_current_month
 from db.db_manager import get_carbon_emission_by_company
 from db.db_manager import get_top_carbon_emitter_company
@@ -55,7 +55,7 @@ def waste_type_api():
 
 @stats_bp.route("/api/monthly-stats")
 def monthly_stats_api():
-    return jsonify(get_monthly_stats())
+    return jsonify(get_monthly_stats2())
 
 
 @stats_bp.route("/api/waste-percentage")

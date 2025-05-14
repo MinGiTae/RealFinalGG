@@ -1,5 +1,10 @@
 // static/js/GG_005_analytics_and_statistics.js
 
+
+
+
+
+
 // ─────────────────────────────────────────────────────────────
 // 0) Chart.js 공통 설정
 Chart.defaults.color = 'white';
@@ -10,6 +15,11 @@ Chart.defaults.plugins.title.align = 'start';
 Chart.defaults.plugins.title.padding = { top: 4, bottom: 4 };
 Chart.defaults.layout = { padding: { left: 0, right: 0, top: 0, bottom: 0 } };
 // ─────────────────────────────────────────────────────────────
+
+
+
+
+
 
 document.addEventListener('DOMContentLoaded', () => {
   // ── 1) 폐기물별 탄소 배출량 (도넛) ──
@@ -91,103 +101,194 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-  // ── 3) 월별 탄소량 & 폐기물량 비교 (바, 시간축) ──
-  const ctx3 = document.getElementById('monthlyCompareChart').getContext('2d');
-  fetch('/api/monthly-stats')
-    .then(r => r.json())
-    .then(data => {
-      // "YYYY-MM" → "YYYY-MM-01" 으로 변환
-      const labels = data.map(d => d.month + '-01');
-      new Chart(ctx3, {
-        type: 'bar',
-        data: {
-          labels,
-          datasets: [
-            {
-              label: '폐기물 배출량',
-              data: data.map(d => d.total_waste),
-              backgroundColor: '#fbbf24', borderRadius: 6
-            },
-            {
-              label: '탄소 배출량',
-              data: data.map(d => d.total_emission),
-              backgroundColor: '#3b82f6', borderRadius: 6
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            title: { display: true, text: '월별 탄소량과 폐기물량 비교', font: { size: 16 } },
-            legend: { labels: { color: 'white' } }
-          },
-          scales: {
-            x: {
-              type: 'time',
-              time: {
-                parser: 'yyyy-MM-dd',
-                unit: 'month',
-                displayFormats: { month: 'yyyy-MM' }
-              },
-              ticks: { color: 'white' },
-              grid: { display: false }
-            },
-            y: {
-              beginAtZero: true,
-              ticks: { color: 'white' },
-              grid: { color: 'rgba(255,255,255,0.1)' }
-            }
-          }
-        }
-      });
-    })
-    .catch(console.error);
 
-  // ── 4) 3월 폐기물 배출량 순위 (가로바) ──
-  fetch('/api/waste-percentage')
-    .then(r => r.json())
-    .then(data => {
-      const ctx4 = document.getElementById('marchWasteChart').getContext('2d');
-      new Chart(ctx4, {
-        type: 'bar',
-        data: {
-          labels: data.map(d => d.waste_type),
-          datasets: [{
-            data: data.map(d => d.percentage),
-            backgroundColor: ['#f5a623','#80deea','#42a5f5','#ce93d8'],
-            borderRadius: 8,
-            barThickness: 20
-          }]
-        },
-        options: {
-          indexAxis: 'y',
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            title: { display: true, text: '3월 폐기물 배출량 순위', font: { size: 16 } },
-            legend: { display: false },
-            datalabels: {
-              color: 'white',
-              anchor: 'center',
-              align: 'center',
-              font: { size: 12, weight: 'bold' },
-              formatter: v => `${v}%`
-            }
-          },
-          scales: {
-            x: {
-              beginAtZero: true,
-              max: 100,
-              ticks: { color: '#ccc', callback: v => `${v}%` },
-              grid: { color: 'rgba(255,255,255,0.05)' }
-            },
-            y: { ticks: { color: 'white' }, grid: { display: false } }
-          }
-        },
-        plugins: [ChartDataLabels]
-      });
-    });
+// ↓ 아래부터 기존 코드
+
+  // ── 3) 월별 탄소량 & 폐기물량 비교 (바, 시간축) ──
+//  const ctx3 = document.getElementById('monthlyCompareChart').getContext('2d');
+//  fetch('/api/monthly-stats')
+//    .then(r => r.json())
+//    .then(data => {
+//      // "YYYY-MM" → "YYYY-MM-01" 으로 변환
+//
+//
+//      const labels = data.map(d => d.month);
+//
+//      new Chart(ctx3, {
+//        type: 'bar',
+//        data: {
+//          labels,
+//          datasets: [
+//            {
+//              label: '폐기물 배출량',
+//              data: data.map(d => d.total_waste),
+//              backgroundColor: '#fbbf24', borderRadius: 6
+//            },
+//            {
+//              label: '탄소 배출량',
+//              data: data.map(d => d.total_emission),
+//              backgroundColor: '#3b82f6', borderRadius: 6
+//            }
+//          ]
+//        },
+//        options: {
+//          responsive: true,
+//          maintainAspectRatio: false,
+//          plugins: {
+//            title: { display: true, text: '월별 탄소량과 폐기물량 비교', font: { size: 16 } },
+//            legend: { labels: { color: 'white' } }
+//          },
+//          scales: {
+//            x: {
+//              type: 'category',
+//              time: {
+//                parser: 'yyyy-MM-dd',
+//                unit: 'month',
+//                displayFormats: { month: 'yyyy년 M월' }
+//              },
+//              ticks: { color: 'white',
+//              callback: v => v.replace('-', '년 ') + '월'
+//              },
+//              grid: { display: false }
+//            },
+//            y: {
+//              beginAtZero: true,
+//              ticks: { color: 'white' },
+//              grid: { color: 'rgba(255,255,255,0.1)' }
+//            }
+//          }
+//        }
+//      });
+//    })
+//    .catch(console.error);
+//const ctx3 = document.getElementById('monthlyCompareChart').getContext('2d');
+//
+//fetch('/api/monthly-stats')
+//  .then(res => res.json())
+//  .then(data => {
+//    const labels = data.map(d => d.month);
+//    console.log("📅 labels 확인", labels);  // ← 여기에 넣어봐
+//
+//    const wasteData = data.map(d => d.total_waste);
+//    const emissionData = data.map(d => d.total_emission);
+//
+//    new Chart(ctx3, {
+//      type: 'bar',
+//      data: {
+//        labels: labels,
+//        datasets: [
+//          {
+//            label: '폐기물 배출량',
+//            data: wasteData,
+//            backgroundColor: '#fbbf24',
+//            borderRadius: 6
+//          },
+//          {
+//            label: '탄소 배출량',
+//            data: emissionData,
+//            backgroundColor: '#3b82f6',
+//            borderRadius: 6
+//          }
+//        ]
+//      },
+//      options: {
+//        responsive: true,
+//        maintainAspectRatio: false,
+//        plugins: {
+//          legend: {
+//            display: true,
+//            labels: { color: 'white', font: { size: 14 } }
+//          },
+//          title: {
+//            display: true,
+//            text: '월별 탄소량과 폐기물량 비교',
+//            color: 'white',
+//            font: { size: 20, weight: 'bold' },
+//            padding: { bottom: 20 }
+//          }
+//        },
+//        scales: {
+//          x: {
+//
+//            type: 'category',
+//            ticks: { color: 'white', font: { size: 14 },
+//                callback: function(value) {
+//      const rawLabel = this.getLabelForValue(value);
+//      if (typeof rawLabel === 'string' && rawLabel.includes('-')) {
+//        const [year, month] = rawLabel.split('-');
+//        return `${year}년 ${parseInt(month)}월`;
+//      }
+//      return rawLabel;
+//    }
+//
+//
+//
+//
+//
+//            },
+//
+//            grid: { display: false }
+//          },
+//          y: {
+//            beginAtZero: true,
+//            ticks: { color: 'white', font: { size: 14 } },
+//            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+//          }
+//        }
+//      }
+//    });
+//  });
+//
+//
+//
+//  // ── 4) 3월 폐기물 배출량 순위 (가로바) ──
+//  const now = new Date();
+//  const currentMonthTitle = `${now.getMonth() + 1}월 폐기물 배출량 순위`;
+//
+//
+//  fetch('/api/waste-percentage')
+//    .then(r => r.json())
+//    .then(data => {
+//      const ctx4 = document.getElementById('marchWasteChart').getContext('2d');
+//      new Chart(ctx4, {
+//        type: 'bar',
+//        data: {
+//          labels: data.map(d => d.waste_type),
+//          datasets: [{
+//            data: data.map(d => d.percentage),
+//            backgroundColor: ['#f5a623','#80deea','#42a5f5','#ce93d8'],
+//            borderRadius: 8,
+//            barThickness: 20
+//          }]
+//        },
+//        options: {
+//          indexAxis: 'y',
+//          responsive: true,
+//          maintainAspectRatio: false,
+//          plugins: {
+//            title: { display: true, text: currentMonthTitle , font: { size: 16 } },
+//            legend: { display: false },
+//            datalabels: {
+//              color: 'white',
+//              anchor: 'center',
+//              align: 'center',
+//              font: { size: 12, weight: 'bold' },
+//              formatter: v => `${v}%`
+//            }
+//          },
+//          scales: {
+//            x: {
+//              beginAtZero: true,
+//              max: 100,
+//              ticks: { color: '#ccc', callback: v => `${v}%` },
+//              grid: { color: 'rgba(255,255,255,0.05)' }
+//            },
+//            y: { ticks: { color: 'white' }, grid: { display: false } }
+//          }
+//        },
+//        plugins: [ChartDataLabels]
+//      });
+//    });
 
   // ── 5) 건설사별 탄소 배출량 (라인) ──
   const ctx5 = document.getElementById('companyCarbonChart').getContext('2d');

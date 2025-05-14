@@ -16,7 +16,7 @@ def get_connection():
     return pymysql.connect(
         host="localhost",
         user="root",
-        password="0731",  # ← 수정: DB 비밀번호 변경
+        password="0000",  # ← 수정: DB 비밀번호 변경
         database="garbageguard",
         charset="utf8mb4",
         cursorclass=pymysql.cursors.DictCursor
@@ -675,6 +675,39 @@ def get_top_waste_types_by_region(region_keyword: str):
             row['total_amount'] = float(row['total_amount'])
     conn.close()
     return result
+
+# ▶ 추가 함수 8: 월별 폐기물과 탄소 배출량
+def get_monthly_stats2(site_id=None):
+    conn = get_connection()
+    with conn.cursor() as cursor:
+        if site_id:
+            cursor.execute(
+                """
+                    SELECT DATE_FORMAT(disposal_date,'%Y년 %m월') AS month,
+                           SUM(waste_amount)     AS total_waste,
+                           SUM(carbon_emission)  AS total_emission
+                      FROM waste_management
+                     WHERE site_id=%s
+                     GROUP BY month
+                     ORDER BY month
+                """,
+                (site_id,)
+            )
+        else:
+            cursor.execute(
+                """
+                    SELECT DATE_FORMAT(disposal_date,'%%Y-%%m') AS month,
+                           SUM(waste_amount)     AS total_waste,
+                           SUM(carbon_emission)  AS total_emission
+                      FROM waste_management
+                     GROUP BY month
+                     ORDER BY month
+                """
+            )
+        rows = cursor.fetchall()
+    conn.close()
+    return rows
+
 
 
 def get_images_for_site(company_name: str, site_name: str) -> list:
